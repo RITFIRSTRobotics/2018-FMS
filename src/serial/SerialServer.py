@@ -1,13 +1,26 @@
-import io
+# shamelessly stolen from https://stackoverflow.com/questions/6031584/importing-from-builtin-library-when-module-with-same-name-exists
+def import_non_local(name, custom_name=None):
+    import imp, sys
+
+    custom_name = custom_name or name
+
+    f, pathname, desc = imp.find_module(name, sys.path[1:])
+    module = imp.load_module(custom_name, f, pathname, desc)
+    f.close()
+
+    return module
+
+serial = import_non_local('serial', 'pyserial')
+
 import serial
-import serial.tools.list_ports
+from serial.tools import list_ports
 
 from core.utils.HeaderParser import HeaderParser
 from core.utils.AllianceColor import AllianceColor
 
 
 # Get some constants from the Constants.hpp file on import
-h_parser = HeaderParser("../../core/serial/Constants.hpp")
+h_parser = HeaderParser(str(__file__).replace("\\src\\serial\\SerialServer.py", "") + "\\core\\serial\\Constants.hpp" )
 baudrate = h_parser.contents["BAUD_RATE"]
 init_str = h_parser.contents["INIT_STRING"]
 test_msg = h_parser.contents["TEST_MESSAGE"]
@@ -25,7 +38,7 @@ class SerialServer:
 
         # Check color
         if type(color) is not AllianceColor:
-            raise ImportError("color should be an AllianceColor defined in core/utils")
+            raise TypeError("color should be an AllianceColor defined in core/utils")
 
         # Tell the Arduino to initialize
         self.ser.open()
