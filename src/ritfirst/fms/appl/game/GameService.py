@@ -10,6 +10,7 @@ from ritfirst.fms.appl.game.MatchTimeThread import MatchTimeThread
 
 class GameService:
     match_thread = None
+    match_running = False
     r_net_service = None
     scoring_service = None
 
@@ -33,7 +34,7 @@ class GameService:
         Start the match
         """
         # Make a match time object
-        self.match_thread = MatchTimeThread()
+        self.match_thread = MatchTimeThread(self)
 
         # Tell the net service to send out enable packets
         self.r_net_service.disabled = False
@@ -41,12 +42,16 @@ class GameService:
         # Start the match timing
         self.match_thread.start()
 
+        # Update the match_running variable
+        self.match_running = True
+
     def stop_match(self):
         """
         Stop a match (not as sensitive/difficult as e_stopping a match, but same effect)
         """
         self.match_thread = None
         self.r_net_service.disabled = True
+        self.match_running = False
 
     def e_stop_robot(self, num):  # todo move to utils file?
         """
