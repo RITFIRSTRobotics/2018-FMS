@@ -8,6 +8,7 @@ from ritfirst.fms.appl.RobotNetworkService import RobotNetworkService
 from ritfirst.fms.appl.SerialTransmissionService import SerialTransmissionService
 from ritfirst.fms.appl.game.GameService import GameService
 from ritfirst.fms.appl.game.ScoringService import ScoringService
+from ritfirst.fms.utils.SerialUtils import ser_readline
 
 
 def main():
@@ -74,11 +75,12 @@ def main():
             continue
 
         # Save the red alliance's serial connection
-        if sections[0] == "r":
+        if sections[0] == "r":  # todo move to initialization utils, add timeout check to ser_readline
             rser = serial.Serial(current_coms[int(sections[1])], baudrate=hp.contents['BAUD_RATE'])
             rser.open()
             rser.write(hp.contents['INIT_MESSAGE'].replace("%c", "r"))
-            recv = rser.readline()
+            rser.write("\n")
+            recv = ser_readline(rser)
             if recv.strip() != hp.contents['INIT_RESPONSE'].strip():
                 print("Invalid response `" + recv + "`, not using port", end="", file=sys.stderr)
                 rser.close()
@@ -90,7 +92,8 @@ def main():
             bser = serial.Serial(current_coms[int(sections[1])], baudrate=hp.contents['BAUD_RATE'])
             bser.open()
             bser.write(hp.contents['INIT_MESSAGE'].replace("%c", "r"))
-            recv = bser.readline()
+            bser.write("\n")
+            recv = ser_readline(bser)
             if recv.strip() != hp.contents['INIT_RESPONSE'].strip():
                 print("Invalid response `" + recv + "`, not using port", end="", file=sys.stderr)
                 bser.close()
