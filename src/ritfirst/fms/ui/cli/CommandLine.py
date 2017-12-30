@@ -67,6 +67,7 @@ def main():
         # Send a blink command
         if sections[0] == "b":
             ser = serial.Serial(current_coms[int(sections[1])], baudrate=hp.contents['BAUD_RATE'])
+            ser.open()
             ser.write(hp.contents['BLINK_MESSAGE'])
             ser.write("\n")
             ser.close()
@@ -75,11 +76,25 @@ def main():
         # Save the red alliance's serial connection
         if sections[0] == "r":
             rser = serial.Serial(current_coms[int(sections[1])], baudrate=hp.contents['BAUD_RATE'])
+            rser.open()
+            rser.write(hp.contents['INIT_MESSAGE'].replace("%c", "r"))
+            recv = rser.readline()
+            if recv.strip() != hp.contents['INIT_RESPONSE'].strip():
+                print("Invalid response `" + recv + "`, not using port", end="", file=sys.stderr)
+                rser.close()
+                rser = None
             continue
 
         # Save the blue alliance's serial connection
         if sections[0] == "b":
             bser = serial.Serial(current_coms[int(sections[1])], baudrate=hp.contents['BAUD_RATE'])
+            bser.open()
+            bser.write(hp.contents['INIT_MESSAGE'].replace("%c", "r"))
+            recv = bser.readline()
+            if recv.strip() != hp.contents['INIT_RESPONSE'].strip():
+                print("Invalid response `" + recv + "`, not using port", end="", file=sys.stderr)
+                bser.close()
+                bser = None
             continue
 
         # If the program made it this far, then it can't process it
