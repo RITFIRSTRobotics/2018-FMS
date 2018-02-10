@@ -9,6 +9,7 @@ import sys
 
 from core.utils.AllianceColor import AllianceColor
 from core.utils.HeaderParser import HeaderParser
+from ritfirst.fms.utils.SerialUtils import ser_readline
 
 
 class SerialTransmissionService(Thread):
@@ -62,10 +63,10 @@ class SerialTransmissionService(Thread):
 
                 controller_buttons = [None] * 4
                 # Decode the button data
-                controller_buttons[0] = bool(int(split[6]) & 2_0001)
-                controller_buttons[1] = bool(int(split[6]) & 2_0010)
-                controller_buttons[2] = bool(int(split[6]) & 2_0100)
-                controller_buttons[3] = bool(int(split[6]) & 2_1000)
+                controller_buttons[0] = bool(int(split[6]) & 1)
+                controller_buttons[1] = bool(int(split[6]) & 2)
+                controller_buttons[2] = bool(int(split[6]) & 4)
+                controller_buttons[3] = bool(int(split[6]) & 8)
 
                 self.out_service.append(color, controller_num, controller_sticks, controller_buttons)
 
@@ -79,9 +80,9 @@ class SerialTransmissionService(Thread):
         while True:
             # Read and process data sent to the ASC
             if self.rser.in_waiting > 0:
-                _process(self.rser.readline(), AllianceColor.RED)
+                _process(ser_readline(self.rser), AllianceColor.RED)
             if self.bser.in_waiting > 0:
-                _process(self.bser.readline(), AllianceColor.BLUE)
+                _process(ser_readline(self.bser), AllianceColor.BLUE)
 
             # Check for cleanup
             if self.cleanup:
