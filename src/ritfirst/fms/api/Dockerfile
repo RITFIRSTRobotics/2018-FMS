@@ -8,7 +8,7 @@ RUN pip install --no-cache-dir pipenv
 # Defining working directory and adding source code
 WORKDIR /usr/src/app
 COPY Pipfile Pipfile.lock bootstrap.sh ./
-COPY fms-api ./fms-api
+COPY fmsapi ./fmsapi
 
 # Install API dependencies
 RUN pipenv install
