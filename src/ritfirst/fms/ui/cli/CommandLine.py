@@ -1,6 +1,7 @@
 import serial
 from serial.tools.list_ports import comports
 import sys
+import time
 
 from core.utils.HeaderParser import HeaderParser
 from ritfirst.fms.appl.RobotConnectionService import RobotConnectionService
@@ -20,6 +21,7 @@ def main():
         print("No serial ports available", file=sys.stderr)
         sys.exit(1)
 
+
     if len(comports()) < 2:
         print("Not enough serial ports (only " + str(len(comports())) + " ports found)", file=sys.stderr)
         sys.exit(1)
@@ -33,7 +35,7 @@ def main():
         print(str(current_coms[i]) + " | `" + str(i) + "`")
 
     # Print out usage data
-    print("Use `b <index>` to send a blink, `r <index>` or `b <index>` to set an alliance's ASC to a serial port")
+    print("Use `l <index>` to send a blink, `r <index>` or `b <index>` to set an alliance's ASC to a serial port")
     print("Use `refresh` to recheck the serial ports", end="")
 
     rser = None
@@ -66,9 +68,8 @@ def main():
             continue
 
         # Send a blink command
-        if sections[0] == "b":
-            ser = serial.Serial(current_coms[int(sections[1])], baudrate=hp.contents['BAUD_RATE'])
-            ser.open()
+        if sections[0] == "l":
+            ser = serial.Serial(port=current_coms[int(sections[1])].device, baudrate=hp.contents['BAUD_RATE'], timeout=1)
             ser.write(hp.contents['BLINK_MESSAGE'])
             ser.write("\n")
             ser.close()
@@ -76,10 +77,15 @@ def main():
 
         # Save the red alliance's serial connection
         if sections[0] == "r":  # todo move to initialization utils, add timeout check to ser_readline
-            rser = serial.Serial(current_coms[int(sections[1])], baudrate=hp.contents['BAUD_RATE'])
+            rser = serial.Serial()
+            rser.port = current_coms[int(sections[1])].device
+            rser.baudrate = hp.contents['BAUD_RATE']
+            rser.timeout = 1
             rser.open()
-            rser.write(hp.contents['INIT_MESSAGE'].replace("%c", "r"))
-            rser.write("\n")
+            time.sleep(1)
+
+            rser.write(hp.contents['INIT_MESSAGE'].replace("%c", "r").encode())
+            rser.write("\n".encode())
             recv = ser_readline(rser)
             if recv.strip() != hp.contents['INIT_RESPONSE'].strip():
                 print("Invalid response `" + recv + "`, not using port", end="", file=sys.stderr)
@@ -89,10 +95,15 @@ def main():
 
         # Save the blue alliance's serial connection
         if sections[0] == "b":
-            bser = serial.Serial(current_coms[int(sections[1])], baudrate=hp.contents['BAUD_RATE'])
+            bser = serial.Serial()
+            bser.port=current_coms[int(sections[1])].device
+            bser.baudrate=hp.contents['BAUD_RATE']
+            bser.timeout=1
             bser.open()
-            bser.write(hp.contents['INIT_MESSAGE'].replace("%c", "r"))
-            bser.write("\n")
+            time.sleep(1)
+
+            bser.write(hp.contents['INIT_MESSAGE'].replace("%c", "r").encode())
+            bser.write("\n".encode())
             recv = ser_readline(bser)
             if recv.strip() != hp.contents['INIT_RESPONSE'].strip():
                 print("Invalid response `" + recv + "`, not using port", end="", file=sys.stderr)
@@ -157,7 +168,7 @@ def main():
         # Debugging
         if text == "debug":
             print("buff: " + str(rns.buffer_size))
-            print("match_time: " + str(game.match_thread.remaining))
+            print("match_time: " + str(game.match_thread.remaining if game.match_thread != None else 0))
             print("rscore: " + str(scs.red_score))  # alternatively, game.get_scores()[0]
             print("bscore: " + str(scs.blue_score))  # alternatively, game.get_scores()[1]
             continue
