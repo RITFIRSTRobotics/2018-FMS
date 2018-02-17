@@ -3,7 +3,8 @@ from flask import Flask, jsonify, request
 app = Flask(__name__)
 
 bots = [
-    { 'id': 1, 'description': 'pusher bot 1'}
+    { 'id': 1, 'description': 'pusher bot 1'},
+    { 'id': 2, 'description': 'pusher bot 2'}
 ]
 
 @app.route('/bots')
