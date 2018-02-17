@@ -21,17 +21,9 @@ def check_ports():
     if len(comports()) < 2:
         return (1, 'Not enough serial ports (only ' + str(len(comports())) + ' ports found)')
 
-    return comports()[:]
+    return (0, comports()[:])
 
 def main():
-
-    # Pick out a serial port
-
-    # Print out available ports
-    print("Available serial ports:")
-    current_coms = comports()[:]
-    for i in range(len(current_coms)):
-        print(str(current_coms[i]) + " | `" + str(i) + "`")
 
     # Print out usage data
     print("Use `l <index>` to send a blink, `r <index>` or `b <index>` to set an alliance's ASC to a serial port")
