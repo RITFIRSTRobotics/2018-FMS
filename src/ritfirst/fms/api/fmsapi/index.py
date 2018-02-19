@@ -14,7 +14,7 @@ def get_ports():
     if code != 0:
         return data
     else:
-        return {i:port for i, port in enumerate(data)}
+        return jsonify({i:str(port) for i, port in enumerate(data)})
 
 @app.route('/bots')
 def get_bots():
