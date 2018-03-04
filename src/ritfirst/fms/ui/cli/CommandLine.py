@@ -11,7 +11,6 @@ from ritfirst.fms.appl.game.GameService import GameService
 from ritfirst.fms.appl.game.ScoringService import ScoringService
 from ritfirst.fms.utils.SerialUtils import ser_readline
 
-
 def main():
     # Welcome message
     print("RIT FIRST ImagineRIT FMS\nPlease note: this is a primitive CLI (for testing)\n")
@@ -69,9 +68,15 @@ def main():
 
         # Send a blink command
         if sections[0] == "l":
-            ser = serial.Serial(port=current_coms[int(sections[1])].device, baudrate=hp.contents['BAUD_RATE'], timeout=1)
-            ser.write(hp.contents['BLINK_MESSAGE'])
-            ser.write("\n")
+            ser = serial.Serial()
+            ser.port = current_coms[int(sections[1])].device
+            ser.baudrate = hp.contents['BAUD_RATE']
+            ser.timeout = 1
+            ser.open()
+            time.sleep(1)
+
+            ser.write(hp.contents['BLINK_MESSAGE'].encode())
+            ser.write("\n".encode())
             ser.close()
             continue
 
@@ -102,7 +107,7 @@ def main():
             bser.open()
             time.sleep(1)
 
-            bser.write(hp.contents['INIT_MESSAGE'].replace("%c", "r").encode())
+            bser.write(hp.contents['INIT_MESSAGE'].replace("%c", "b").encode())
             bser.write("\n".encode())
             recv = ser_readline(bser)
             if recv.strip() != hp.contents['INIT_RESPONSE'].strip():
@@ -171,6 +176,7 @@ def main():
             print("match_time: " + str(game.match_thread.remaining if game.match_thread != None else 0))
             print("rscore: " + str(scs.red_score))  # alternatively, game.get_scores()[0]
             print("bscore: " + str(scs.blue_score))  # alternatively, game.get_scores()[1]
+            print("statuses: " + str(rcs.statuses))
             continue
 
         print("Unknown command `" + text + "`, use `help` to see all commands", end="", file=sys.stderr)

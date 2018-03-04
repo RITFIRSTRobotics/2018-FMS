@@ -31,7 +31,7 @@ class RobotConnectionStatus(Enum):
         return int(self.value)
 
 class RobotConnectionService(Thread):
-    statuses = list()
+    statuses = [None] * 6  # make an empty list of length 6
     cleanup = False
 
     def run(self):
@@ -41,9 +41,16 @@ class RobotConnectionService(Thread):
                 try:
                     # Connect to a robot and ask it for it's status
                     sock = socket.socket()
-                    sock.connect((robot_ip, PORT))
+                    sock.settimeout(TIMEOUT_TIME)
+                    try:
+                        sock.connect((robot_ip, PORT))
+                    except:
+                        self.statuses[robot_num] = RobotConnectionStatus.ERROR
+                        continue
+
+                    sock.settimeout(None) # should remove the timeout time now that a connection hss been made
                     pack = Packet(PacketType.REQUEST, RequestData.STATUS)
-                    sock.send(jsonpickle.encode(pack).encode())  # send it
+                    sock.send(jsonpickle.encode(pack).encode())  # just gonna send it
 
                     # Wait for the response
                     response = jsonpickle.decode(sock.recv(BUFFER_SIZE).decode())
@@ -61,7 +68,7 @@ class RobotConnectionService(Thread):
                                 self.statuses[robot_num] = RobotConnectionStatus.E_STOPPED
                             else:
                                 self.statuses[robot_num] = RobotConnectionStatus.ERROR
-                except:
+                except Exception as e:
                     self.statuses[robot_num] = RobotConnectionStatus.ERROR
 
             # Check and see if the service needs to stop

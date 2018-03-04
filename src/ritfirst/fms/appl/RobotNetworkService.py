@@ -6,7 +6,7 @@ from threading import Thread
 import jsonpickle
 
 from core.network.Packet import PacketType, Packet
-from core.network.constants import ROBOT_IPS, PORT
+from core.network.constants import ROBOT_IPS, PORT, TIMEOUT_TIME
 from core.network.packetdata.MovementData import MovementData
 from core.network.packetdata.RobotStateData import RobotStateData
 from core.utils.AllianceColor import AllianceColor
@@ -34,7 +34,14 @@ class RobotNetworkService(Thread):
                 # Send an updated status packet
                 for i in range(6):
                     sock = socket.socket()
-                    sock.connect((ROBOT_IPS[i], PORT))
+                    sock.settimeout(TIMEOUT_TIME)
+                    try:
+                        sock.connect((ROBOT_IPS[i], PORT))
+                    except:
+                        print("robot " + str(i) + " errored out")
+                        continue
+
+                    sock.settimeout(None)
 
                     # Make the packet
                     pack = Packet(PacketType.STATUS, RobotStateData.DISABLE if self.disabled else RobotStateData.ENABLE)
@@ -56,10 +63,18 @@ class RobotNetworkService(Thread):
             for i in range(6):
                 # Connect to the robot
                 sock = socket.socket()
-                sock.connect((ROBOT_IPS[i], PORT))
+                sock.settimeout(TIMEOUT_TIME)
+                try:
+                    sock.connect((ROBOT_IPS[i], PORT))
+                except:
+                    #print("robot " + str(i) + " errored out")
+                    continue
+
+                sock.settimeout(None)
 
                 # Make the packet
                 pack = Packet(PacketType.DATA, MovementData(self.buffer[i].sticks[0], self.buffer[i].sticks[1]))
+                #print(self.buffer[i].sticks[0])
 
                 # Send it
                 sock.send(jsonpickle.encode(pack).encode())
