@@ -1,3 +1,5 @@
+import jsonpickle
+
 from flask import Flask, jsonify, request
 from ritfirst.fms.api.fmsapi.StatusModel import StatusModel
 from ritfirst.fms.api.fmsapi.ScoreboardModel import ScoreboardModel
@@ -14,23 +16,27 @@ scoreboard = ScoreboardModel()
 
 @app.route('/game/init')
 def init_game():
-    return scoreboard.game_service, 200
+    return jsonpickle.encode(scoreboard.game_service), 200
 
 @app.route('/game/start')
 def start_game():
-    return scoreboard.start_match()
+    game_state, http_code = scoreboard.start_match()
+    return jsonpickle.encode(game_state), http_code
 
 @app.route('/game/stop')
 def stop_game():
-    return scoreboard.stop_match()
+    game_state, http_code = scoreboard.stop_match()
+    return jsonpickle.encode(game_state), http_code
 
 @app.route('/game/timer')
 def game_timer():
-    return scoreboard.get_remaining_time()
+    timer, http_code = scoreboard.get_remaining_time()
+    return jsonpickle.encode(timer), http_code
 
 @app.route('/game/scores')
 def game_scores():
-    return scoreboard.get_scores()
+    scores, http_code = scoreboard.get_scores()
+    return jsonpickle.encode(scores), http_code
 
 @app.route('/ports')
 def get_ports():
