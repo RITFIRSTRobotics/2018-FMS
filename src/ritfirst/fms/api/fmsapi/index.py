@@ -16,6 +16,22 @@ scoreboard = ScoreboardModel()
 def init_game():
     return scoreboard.game_service, 200
 
+@app.route('/game/start')
+def start_game():
+    return scoreboard.start_match()
+
+@app.route('/game/stop')
+def stop_game():
+    return scoreboard.stop_match()
+
+@app.route('/game/timer')
+def game_timer():
+    return scoreboard.get_remaining_time()
+
+@app.route('/game/scores')
+def game_scores():
+    return scoreboard.get_scores()
+
 @app.route('/ports')
 def get_ports():
     code, data = status.check_ports()

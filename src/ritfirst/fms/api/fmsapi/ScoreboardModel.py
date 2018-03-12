@@ -21,62 +21,22 @@ class ScoreboardModel:
         self.game_service = GameService(rns, scs)
         pass
 
+    def start_match(self):
+        if self.game_service.match_running == False:
+            self.game_service.start_match()
+            return self.game_service, 200
+        else:
+            return self.game_service, 304
 
-    def main():
-        # Initialize services
-        print("Starting services...")
-        scs = ScoringService()
-        rns = RobotNetworkService()
-        rns.disable_robots()
-        rns.start()
+    def stop_match(self):
+        if self.game_service.match_running == True:
+            self.game_service.stop_match()
+            return self.game_service, 200
+        else:
+            return self.game_service, 304
 
-        game = GameService(rns, scs)
-
-        rcs = RobotConnectionService()
-        rcs.start()
-
-        print("Services successfully started, running command loop. Enter `help` for command list")
-
-        while True:
-            # Console message
-            print("\nfms> ", end="")
-            text = input()
-
-            # Help message
-            if text == "help":
-                print("help -- print this message")
-                print("start -- start a match (if not already started)")
-                print("stop -- stop the current match")
-                print("estop <index> -- emergency stop the robot at index (0 through 6)", end="")
-                continue
-
-            # Match start
-            if text == "start":
-                if game.match_running == False:
-                    game.start_match()
-                else:
-                    print("Match already running!", end="", file=sys.stderr)
-                continue
-
-            # Match end
-            if text == "stop":
-                if game.match_running == True:
-                    game.stop_match()
-                else:
-                    print("Match not running!", end="", file=sys.stderr)
-                continue
-
-            # E-stop
-            if text.startswith("estop "):
-                game.e_stop_robot(int(text[6]))
-                continue
-
-            # Debugging
-            if text == "debug":
-                print("buff: " + str(rns.buffer_size))
-                print("match_time: " + str(game.match_thread.remaining if game.match_thread != None else 0))
-                print("rscore: " + str(scs.red_score))  # alternatively, game.get_scores()[0]
-                print("bscore: " + str(scs.blue_score))  # alternatively, game.get_scores()[1]
-                continue
-
-            print("Unknown command `" + text + "`, use `help` to see all commands", end="", file=sys.stderr)
+    def get_scores(self):
+        return self.game_service.get_scores(), 200
+    
+    def get_remaining_time(self):
+        return self.game_service.get_remaining_time(), 200
