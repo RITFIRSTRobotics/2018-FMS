@@ -1,11 +1,4 @@
-import serial
-from serial.tools.list_ports import comports
-import sys
-import time
-
-from ritfirst.fms.appl.RobotConnectionService import RobotConnectionService
 from ritfirst.fms.appl.RobotNetworkService import RobotNetworkService
-from ritfirst.fms.appl.SerialTransmissionService import SerialTransmissionService
 from ritfirst.fms.appl.game.GameService import GameService
 from ritfirst.fms.appl.game.ScoringService import ScoringService
 

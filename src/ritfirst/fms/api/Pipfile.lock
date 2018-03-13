@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "a523bc42d2acbe5f3a4fe45cdbafcc7edc4dd1463ef3c65e67b1a01d2b8d8b3b"
+            "sha256": "7d3d3cb955b9658aacaa2eb926d3f32df87360d5448e5cee3db5b55275721e0a"
         },
         "host-environment-markers": {
             "implementation_name": "cpython",
@@ -67,6 +67,13 @@
                 "sha256:a6be69091dac236ea9c6bc7d012beab42010fa914c459791d627dad4910eb665"
             ],
             "version": "==1.0"
+        },
+        "marshmallow": {
+            "hashes": [
+                "sha256:8740ada95f47fa19f905772aa4932dc5512226a90c30da5672d6d6bf3dd791a7",
+                "sha256:d3f31fe7be2106b1d783cbd0765ef4e1c6615505514695f33082805f929dd584"
+            ],
+            "version": "==2.15.0"
         },
         "pyserial": {
             "hashes": [

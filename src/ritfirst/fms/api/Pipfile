@@ -14,6 +14,7 @@ name = "pypi"
 flask = "*"
 pyserial = "*"
 jsonpickle = "*"
+marshmallow = "*"
 
 
 [requires]
