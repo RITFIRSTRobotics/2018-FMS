@@ -30,12 +30,12 @@ def stop_game():
 @app.route('/game/timer')
 def game_timer():
     timer, http_code = scoreboard.get_remaining_time()
-    return jsonify(timer), http_code
+    return jsonify({'remaining': timer}), http_code
 
 @app.route('/game/scores')
 def game_scores():
     scores, http_code = scoreboard.get_scores()
-    return jsonify(scores), http_code
+    return jsonify({'red_score': scores[0], 'blue_score': scores[1]}), http_code
 
 @app.route('/ports')
 def get_ports():
