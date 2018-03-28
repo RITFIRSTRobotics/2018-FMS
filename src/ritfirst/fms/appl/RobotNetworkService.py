@@ -32,23 +32,8 @@ class RobotNetworkService(Thread):
             # Check to see if the state has changed
             if self.disabled != self._r_disabled:
                 # Send an updated status packet
-                for i in range(6):
-                    sock = socket.socket()
-                    sock.settimeout(TIMEOUT_TIME)
-                    try:
-                        sock.connect((ROBOT_IPS[i], PORT))
-                    except:
-                        print("robot " + str(i) + " errored out")
-                        continue
-
-                    sock.settimeout(None)
-
-                    # Make the packet
-                    pack = Packet(PacketType.STATUS, RobotStateData.DISABLE if self.disabled else RobotStateData.ENABLE)
-
-                    # Send it
-                    sock.send(jsonpickle.encode(pack).encode())
-                    sock.close()
+                pack = Packet(PacketType.STATUS, RobotStateData.DISABLE if self.disabled else RobotStateData.ENABLE)
+                RobotNetworkService._packet_send(pack, ROBOT_IPS, fast_mode=True)
                 self._r_disabled = self.disabled
                 continue
 
@@ -61,25 +46,10 @@ class RobotNetworkService(Thread):
             # Iterate over each item in the buffer
             start = datetime.now().microsecond
             for i in range(6):
-                # Connect to the robot
-                sock = socket.socket()
-                sock.settimeout(TIMEOUT_TIME)
-                try:
-                    sock.connect((ROBOT_IPS[i], PORT))
-                except:
-                    #print("robot " + str(i) + " errored out")
-                    continue
-
-                sock.settimeout(None)
-
-                # Make the packet
+                # Make the packet and send it
                 pack = Packet(PacketType.DATA, MovementData(self.buffer[i].sticks[0], self.buffer[i].sticks[1]))
-                #print(self.buffer[i].sticks[0])
 
-                # Send it
-                sock.send(jsonpickle.encode(pack).encode())
-                sock.close()
-
+                RobotNetworkService._packet_send(pack, ROBOT_IPS[i], True)
                 self.buffer_size -= 1
                 pass
 
@@ -102,3 +72,41 @@ class RobotNetworkService(Thread):
 
     def disable_robots(self):
         self.disabled = True
+
+    @staticmethod
+    def _packet_send(packet, dest=None, fast_mode=True):
+        """
+        Send a packet to a destination
+        :param packet: PacketData to send
+        :param dest: destination (an int (the robot number), string, or list (which is iterated over))
+        :param fast_mode: should things be sent with fast settings?
+        """
+        if dest == None:
+            return None
+
+        # Check to see if a list (or tuple) was given
+        if type(dest) is list or type(dest) is tuple:
+            # Loop over every item and send
+            for item in dest:
+                RobotNetworkService._packet_send(packet, item)
+        elif type(dest) is int:
+            RobotNetworkService._packet_send(packet, ROBOT_IPS[dest])
+        else:
+            # Make a socket
+            sock = socket.socket()
+
+            # Make it faster
+            if fast_mode:
+                sock.settimeout(TIMEOUT_TIME)
+                sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
+
+            # Try connecting
+            try:
+                sock.connect((dest, PORT))
+            except:
+                return -1
+
+            # Send it
+            sock.send(jsonpickle.encode(packet).encode())
+            sock.close()
+            return 0

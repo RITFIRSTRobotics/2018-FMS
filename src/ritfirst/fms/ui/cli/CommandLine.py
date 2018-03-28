@@ -2,6 +2,7 @@ import serial
 from serial.tools.list_ports import comports
 import sys
 import time
+import wmi
 
 from core.utils.HeaderParser import HeaderParser
 from ritfirst.fms.appl.RobotConnectionService import RobotConnectionService
@@ -146,6 +147,7 @@ def main():
             print("help -- print this message")
             print("start -- start a match (if not already started)")
             print("stop -- stop the current match")
+            print("quit -- closes the program")
             print("estop <index> -- emergency stop the robot at index (0 through 6)", end="")
             continue
 
@@ -179,7 +181,12 @@ def main():
             print("statuses: " + str(rcs.statuses))
             continue
 
+        if text == "exit":
+            game.stop_match()
+            break
+
         print("Unknown command `" + text + "`, use `help` to see all commands", end="", file=sys.stderr)
+
 
 if __name__ == "__main__":
     main()
