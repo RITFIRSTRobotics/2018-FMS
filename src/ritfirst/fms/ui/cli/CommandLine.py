@@ -2,7 +2,6 @@ import serial
 from serial.tools.list_ports import comports
 import sys
 import time
-import wmi
 
 from core.utils.HeaderParser import HeaderParser
 from ritfirst.fms.appl.RobotConnectionService import RobotConnectionService

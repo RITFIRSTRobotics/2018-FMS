@@ -47,7 +47,10 @@ class RobotNetworkService(Thread):
             start = datetime.now().microsecond
             for i in range(6):
                 # Make the packet and send it
-                pack = Packet(PacketType.DATA, MovementData(self.buffer[i].sticks[0], self.buffer[i].sticks[1]))
+                try:
+                    pack = Packet(PacketType.DATA, MovementData(self.buffer[i].sticks[0], self.buffer[i].sticks[1]))
+                except KeyError:
+                    continue
 
                 RobotNetworkService._packet_send(pack, ROBOT_IPS[i], True)
                 self.buffer_size -= 1

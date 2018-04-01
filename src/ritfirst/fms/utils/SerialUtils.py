@@ -8,9 +8,15 @@ def ser_readline(ser):
         except UnicodeDecodeError:
             continue
 
+        if c == "\n" or c == "" :
+            ret_text += c
+            break
+
+        if ord(c) < 32 or ord(c) > 123:
+            continue
+
         ret_text += c # append it to the string
 
-        if c.endswith("\n") or c =="" :
-            break
+
 
     return ret_text

@@ -62,6 +62,22 @@ class SerialTransmissionService(Thread):
                 controller_sticks[3]= int(split[5])
 
                 controller_buttons = [None] * 4
+
+
+                # Need to clean up the number
+                split[6] = split[6].strip()  # clean the '\n'
+                try:
+                    int(split[6])  # check the default input
+                except ValueError:
+                    try:
+                        int(split[6][0:2])  # see if the first two characters are a valid int
+                        split[6] = split[6][0:2]
+                    except ValueError:
+                        try:
+                            int(split[6][0])  # if not, then it has to be only the first character
+                            split[6] = split[6][0]
+                        except:
+                            split[6] = '15'
                 # Decode the button data
                 controller_buttons[0] = bool(int(split[6]) & 1)
                 controller_buttons[1] = bool(int(split[6]) & 2)
