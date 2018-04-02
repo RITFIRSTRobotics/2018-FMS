@@ -1,7 +1,9 @@
 """
 A service that tests the connection between the robot and the FMS
 """
+import select
 import socket
+import sys
 from enum import Enum
 from threading import Thread
 
@@ -31,11 +33,19 @@ class RobotConnectionStatus(Enum):
         return int(self.value)
 
 class RobotConnectionService(Thread):
-    statuses = [None] * 6  # make an empty list of length 6
+    statuses = []
+    for i in range(0, 6):  # make a list of length 6 of ERROR
+        statuses.append(RobotConnectionStatus.ERROR)
     cleanup = False
 
     def run(self):
+        # Make a socket for incoming data
+        ssock = socket.socket()
+        ssock.bind((FMS_IP, PORT))
+        ssock.listen(6)
+
         while True:
+            # Send out requests for data
             for robot_num in range(0, 6):
                 robot_ip = ROBOT_IPS[robot_num]
                 try:
@@ -48,12 +58,33 @@ class RobotConnectionService(Thread):
                         self.statuses[robot_num] = RobotConnectionStatus.ERROR
                         continue
 
-                    sock.settimeout(None) # should remove the timeout time now that a connection hss been made
                     pack = Packet(PacketType.REQUEST, RequestData.STATUS)
                     sock.send(jsonpickle.encode(pack).encode())  # just gonna send it
+                    sock.close()
 
-                    # Wait for the response
-                    response = jsonpickle.decode(sock.recv(BUFFER_SIZE).decode())
+                except Exception as e:
+                    self.statuses[robot_num] = RobotConnectionStatus.ERROR
+
+            # Sleep to allow robots to process the data
+            time.sleep(.05)
+
+            # Process the incoming data from the requests
+            while True:
+                s_readable, _, _ = select.select([ssock], [], [], timeout=TIMEOUT_TIME)  # check to see if a connection has been made
+
+                if s_readable is ssock:
+                    # If the socket is good, open and read data
+                    csock, addr = ssock.accept()
+                    response = jsonpickle.decode(csock.recv(BUFFER_SIZE).decode())
+                    csock.close()
+
+                    # Now, the robot number needs to be determined from the address
+                    ip = addr[0]
+                    try:
+                        robot_num = ROBOT_IPS.index(ip)
+                    except ValueError:  # ip not in the tuple
+                        print("connection from `" + ip + "`, not a robot", file=sys.stderr)
+                        continue
 
                     # Process it
                     if type(response) is not Packet:
@@ -68,11 +99,11 @@ class RobotConnectionService(Thread):
                                 self.statuses[robot_num] = RobotConnectionStatus.E_STOPPED
                             else:
                                 self.statuses[robot_num] = RobotConnectionStatus.ERROR
-                except Exception as e:
-                    self.statuses[robot_num] = RobotConnectionStatus.ERROR
+                else:
+                    break
 
             # Check and see if the service needs to stop
             if not self.cleanup:
-                time.sleep(.750)  # sleep for 750ms
+                time.sleep(.700)  # sleep for 750ms total (50ms above)
             else:
                 break
