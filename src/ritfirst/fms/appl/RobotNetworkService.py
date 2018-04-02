@@ -48,7 +48,7 @@ class RobotNetworkService(Thread):
             for i in range(6):
                 # Make the packet and send it
                 try:
-                    pack = Packet(PacketType.DATA, MovementData(self.buffer[i].sticks[0], self.buffer[i].sticks[1]))
+                    pack = Packet(PacketType.DATA, MovementData(self.buffer[i]))
                 except KeyError:
                     continue
 
@@ -84,7 +84,7 @@ class RobotNetworkService(Thread):
         :param dest: destination (an int (the robot number), string, or list (which is iterated over))
         :param fast_mode: should things be sent with fast settings?
         """
-        if dest == None:
+        if dest is None:
             return None
 
         # Check to see if a list (or tuple) was given

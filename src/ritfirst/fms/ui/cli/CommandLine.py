@@ -182,6 +182,8 @@ def main():
 
         if text == "exit":
             game.stop_match()
+            sts.cleanup = True
+            rcs.cleanup = True
             break
 
         print("Unknown command `" + text + "`, use `help` to see all commands", end="", file=sys.stderr)
