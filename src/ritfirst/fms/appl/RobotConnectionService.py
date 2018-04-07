@@ -70,7 +70,7 @@ class RobotConnectionService(Thread):
 
             # Process the incoming data from the requests
             while True:
-                s_readable, _, _ = select.select([ssock], [], [], timeout=TIMEOUT_TIME)  # check to see if a connection has been made
+                s_readable, _, _ = select.select([ssock], [], [], TIMEOUT_TIME)  # check to see if a connection has been made
 
                 if s_readable is ssock:
                     # If the socket is good, open and read data
