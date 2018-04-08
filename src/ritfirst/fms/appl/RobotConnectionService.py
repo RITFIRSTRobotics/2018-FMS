@@ -32,18 +32,16 @@ class RobotConnectionStatus(Enum):
     def __int__(self):
         return int(self.value)
 
-class RobotConnectionService(Thread):
-    statuses = []
-    for i in range(0, 6):  # make a list of length 6 of ERROR
-        statuses.append(RobotConnectionStatus.ERROR)
-    cleanup = False
+class RobotConnectionSender(Thread):
+    """
+    A class for sending out Robot state requests
+    """
+    def __init__(self, rcs, fast_mode=False):
+        Thread.__init__(self)
+        self.rcs = rcs
+        self.fast_mode = fast_mode
 
     def run(self):
-        # Make a socket for incoming data
-        ssock = socket.socket()
-        ssock.bind((FMS_IP, PORT))
-        ssock.listen(6)
-
         while True:
             # Send out requests for data
             for robot_num in range(0, 6):
@@ -51,59 +49,84 @@ class RobotConnectionService(Thread):
                 try:
                     # Connect to a robot and ask it for it's status
                     sock = socket.socket()
-                    sock.settimeout(TIMEOUT_TIME)
+
+                    if self.fast_mode:
+                        sock.settimeout(TIMEOUT_TIME)
+                        sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
+
                     try:
                         sock.connect((robot_ip, PORT))
                     except:
-                        self.statuses[robot_num] = RobotConnectionStatus.ERROR
+                        self.rcs.statuses[robot_num] = RobotConnectionStatus.ERROR
                         continue
 
                     pack = Packet(PacketType.REQUEST, RequestData.STATUS)
                     sock.send(jsonpickle.encode(pack).encode())  # just gonna send it
                     sock.close()
 
-                except Exception as e:
-                    self.statuses[robot_num] = RobotConnectionStatus.ERROR
-
-            # Sleep to allow robots to process the data
-            time.sleep(.05)
-
-            # Process the incoming data from the requests
-            while True:
-                s_readable, _, _ = select.select([ssock], [], [], TIMEOUT_TIME)  # check to see if a connection has been made
-
-                if s_readable is ssock:
-                    # If the socket is good, open and read data
-                    csock, addr = ssock.accept()
-                    response = jsonpickle.decode(csock.recv(BUFFER_SIZE).decode())
-                    csock.close()
-
-                    # Now, the robot number needs to be determined from the address
-                    ip = addr[0]
-                    try:
-                        robot_num = ROBOT_IPS.index(ip)
-                    except ValueError:  # ip not in the tuple
-                        print("connection from `" + ip + "`, not a robot", file=sys.stderr)
-                        continue
-
-                    # Process it
-                    if type(response) is not Packet:
-                        self.statuses[robot_num] = RobotConnectionStatus.ERROR
-                    else:
-                        if response.type == PacketType.RESPONSE:
-                            if response.data == RobotStateData.ENABLE:
-                                self.statuses[robot_num] = RobotConnectionStatus.ENABLED
-                            elif response.data == RobotStateData.DISABLE:
-                                self.statuses[robot_num] = RobotConnectionStatus.DISABLED
-                            elif response.data == RobotStateData.E_STOP:
-                                self.statuses[robot_num] = RobotConnectionStatus.E_STOPPED
-                            else:
-                                self.statuses[robot_num] = RobotConnectionStatus.ERROR
-                else:
-                    break
+                except Exception:
+                    self.rcs.statuses[robot_num] = RobotConnectionStatus.ERROR
 
             # Check and see if the service needs to stop
-            if not self.cleanup:
-                time.sleep(.700)  # sleep for 750ms total (50ms above)
+            if not self.rcs.cleanup:
+                time.sleep(.750)  # sleep for 750ms total (50ms above)
             else:
                 break
+
+class RobotConnectionReceiver(Thread):
+    """
+    A class for processing Robot state data
+    """
+    def __init__(self, rcs):
+        Thread.__init__(self)
+        self.rcs = rcs
+
+    def run(self):
+        # Make a server socket
+        ssock = socket.socket()
+        ssock.bind((FMS_IP, PORT))
+        ssock.listen(6)
+
+        while True:
+            csock, addr = ssock.accept()
+            pack = jsonpickle.decode(csock.recv(BUFFER_SIZE).decode())  # recieve packets, decode them, then de-json them
+            csock.close()
+
+            # Now, the robot number needs to be determined from the address
+            ip = addr[0]
+            try:
+                robot_num = ROBOT_IPS.index(ip)
+            except ValueError:  # ip not in the tuple
+                print("connection from `" + ip + "`, not a robot", file=sys.stderr)
+                continue
+
+            # Process it
+            if type(pack) is not Packet:
+                self.rcs.statuses[robot_num] = RobotConnectionStatus.ERROR
+            else:
+                if pack.type == PacketType.RESPONSE:
+                    if pack.data == RobotStateData.ENABLE:
+                        self.rcs.statuses[robot_num] = RobotConnectionStatus.ENABLED
+                    elif pack.data == RobotStateData.DISABLE:
+                        self.rcs.statuses[robot_num] = RobotConnectionStatus.DISABLED
+                    elif pack.data == RobotStateData.E_STOP:
+                        self.rcs.statuses[robot_num] = RobotConnectionStatus.E_STOPPED
+                    else:
+                        self.rcs.statuses[robot_num] = RobotConnectionStatus.ERROR
+
+            if self.rcs.cleanup:
+                break
+
+class RobotConnectionService:
+
+    def __init__(self):
+        self.statuses = []
+        for i in range(0, 6):  # make a list of length 6 of ERROR
+            self.statuses.append(RobotConnectionStatus.ERROR)
+        self.cleanup = False
+
+    def start(self):
+        tx = RobotConnectionSender(self, fast_mode=False)
+        rx = RobotConnectionReceiver(self)
+        tx.start()
+        rx.start()
