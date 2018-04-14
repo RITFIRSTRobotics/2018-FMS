@@ -1,17 +1,8 @@
-from ritfirst.fms.appl.RobotNetworkService import RobotNetworkService
-from ritfirst.fms.appl.game.GameService import GameService
-from ritfirst.fms.appl.game.ScoringService import ScoringService
-
-
 class ScoreboardModel:
     game_service = None
 
-    def __init__(self):
-        scs = ScoringService()
-        rns = RobotNetworkService()
-        rns.disable_robots()
-        rns.start()
-        self.game_service = GameService(rns, scs)
+    def __init__(self, game_service):
+        self.game_service = game_service
         pass
 
     def start_match(self):

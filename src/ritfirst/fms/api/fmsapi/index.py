@@ -2,10 +2,10 @@ from flask import Flask, jsonify, request
 from ritfirst.fms.api.fmsapi.ScoreboardModel import ScoreboardModel
 from ritfirst.fms.api.fmsapi.Schemas import ScoreboardModelSchema, GameServiceSchema
 
-def create_flask_app():
+def create_flask_app(game_instance):
     app = Flask(__name__)
 
-    scoreboard = ScoreboardModel()
+    scoreboard = ScoreboardModel(game_instance)
 
     @app.route('/game/init')
     def init_game():

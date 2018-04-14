@@ -10,6 +10,7 @@ from ritfirst.fms.appl.SerialTransmissionService import SerialTransmissionServic
 from ritfirst.fms.appl.game.GameService import GameService
 from ritfirst.fms.appl.game.ScoringService import ScoringService
 from ritfirst.fms.utils.SerialUtils import ser_readline
+from ritfirst.fms.api.fmsapi.index import create_flask_app
 
 def main():
     # Welcome message
@@ -133,6 +134,10 @@ def main():
 
     rcs = RobotConnectionService()
     rcs.start()
+
+    # Start API
+    api = create_flask_app(game)
+    api.run()
 
     print("Services successfully started, running command loop. Enter `help` for command list")
 
