@@ -14,7 +14,7 @@ class ScoreboardModel:
 
     def stop_match(self):
         if self.game_service.match_running == True:
-            self.game_service.stop_match()
+#            self.game_service.stop_match()
             return self.game_service, 200
         else:
             return self.game_service, 304

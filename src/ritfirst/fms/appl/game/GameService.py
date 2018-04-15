@@ -52,6 +52,7 @@ class GameService:
         self.match_thread = None
         self.r_net_service.disabled = True
         self.match_running = False
+        print("stopped")
 
     def e_stop_robot(self, num):  # todo move to utils file?
         """

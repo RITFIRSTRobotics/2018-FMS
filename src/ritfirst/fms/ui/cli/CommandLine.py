@@ -2,6 +2,7 @@ import serial
 from serial.tools.list_ports import comports
 import sys
 import time
+import threading
 
 from core.utils.HeaderParser import HeaderParser
 from ritfirst.fms.appl.RobotConnectionService import RobotConnectionService
@@ -135,9 +136,12 @@ def main():
     rcs = RobotConnectionService()
     rcs.start()
 
-    # Start API
-    api = create_flask_app(game)
-    api.run()
+    def run_flask():
+        # Start API
+        api = create_flask_app(game)
+        api.run()
+
+    threading.Thread(target=run_flask).start()
 
     print("Services successfully started, running command loop. Enter `help` for command list")
 
