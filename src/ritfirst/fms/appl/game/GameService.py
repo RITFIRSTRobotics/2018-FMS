@@ -1,5 +1,4 @@
 import socket
-from enum import Enum
 
 import jsonpickle
 
@@ -7,6 +6,7 @@ from core.network.Packet import Packet, PacketType
 from core.network.constants import ROBOT_IPS, PORT
 from core.network.packetdata.RobotStateData import RobotStateData
 from ritfirst.fms.appl.game.MatchTimeThread import MatchTimeThread
+
 
 class GameService:
     match_thread = None
@@ -17,6 +17,7 @@ class GameService:
     def __init__(self, r_net_service, scoring_service):
         self.r_net_service = r_net_service
         self.scoring_service = scoring_service
+        self.led_service = scoring_service.led_service # steal the reference from the scoring service
         pass
 
     def get_remaining_time(self):
@@ -33,17 +34,14 @@ class GameService:
         """
         Start the match
         """
-        # Make a match time object
         self.match_thread = MatchTimeThread(self)
-
-        # Tell the net service to send out enable packets
         self.r_net_service.disabled = False
-
-        # Start the match timing
         self.match_thread.start()
-
-        # Update the match_running variable
         self.match_running = True
+        self.led_service.start_match()
+
+    def start_endgame(self):
+        self.led_service.almostend_match()
 
     def stop_match(self):
         """
@@ -52,6 +50,7 @@ class GameService:
         self.match_thread = None
         self.r_net_service.disabled = True
         self.match_running = False
+        self.led_service.stop_match()
 
     def e_stop_robot(self, num):  # todo move to utils file?
         """
