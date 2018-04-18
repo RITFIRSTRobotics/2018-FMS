@@ -3,8 +3,10 @@ from core.utils.AllianceColor import AllianceColor
 
 
 class ScoringService:
-    red_score = 0
-    blue_score = 0
+    def __init__(self, led_service):
+        self.red_score = 0
+        self.blue_score = 0
+        self.led_service = led_service
 
     def scored(self, color, goal):
         """
@@ -17,6 +19,7 @@ class ScoringService:
             self.red_score += GOAL_VALUES[goal]
         if color == AllianceColor.BLUE:
             self.blue_score += GOAL_VALUES[goal]
+        self.led_service.scored(color)
 
     def get_scores(self):
         """

@@ -9,6 +9,7 @@ from ritfirst.fms.appl.RobotConnectionService import RobotConnectionService
 from ritfirst.fms.appl.RobotNetworkService import RobotNetworkService
 from ritfirst.fms.appl.SerialTransmissionService import SerialTransmissionService
 from ritfirst.fms.appl.game.GameService import GameService
+from ritfirst.fms.appl.game.LEDControlService import LEDControlService
 from ritfirst.fms.appl.game.ScoringService import ScoringService
 from ritfirst.fms.utils.SerialUtils import ser_readline
 from ritfirst.fms.api.fmsapi.index import create_flask_app
@@ -123,7 +124,8 @@ def main():
 
     # Initialize services
     print("Starting services...")
-    scs = ScoringService()
+    led = LEDControlService(rser, bser)
+    scs = ScoringService(led)
     rns = RobotNetworkService()
     rns.disable_robots()
     rns.start()

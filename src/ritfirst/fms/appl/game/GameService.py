@@ -1,4 +1,5 @@
 import socket
+from enum import Enum
 
 import jsonpickle
 
@@ -6,7 +7,6 @@ from core.network.Packet import Packet, PacketType
 from core.network.constants import ROBOT_IPS, PORT
 from core.network.packetdata.RobotStateData import RobotStateData
 from ritfirst.fms.appl.game.MatchTimeThread import MatchTimeThread
-
 
 class GameService:
     match_thread = None
@@ -52,7 +52,6 @@ class GameService:
         self.match_thread = None
         self.r_net_service.disabled = True
         self.match_running = False
-        print("stopped")
 
     def e_stop_robot(self, num):  # todo move to utils file?
         """
