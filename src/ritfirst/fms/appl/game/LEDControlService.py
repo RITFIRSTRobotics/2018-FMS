@@ -6,7 +6,6 @@ from core.utils.HeaderParser import HeaderParser
 
 
 class LEDControlService:
-
     def __init__(self, rser, bser):
         self.hp = HeaderParser("core/serial/usbser_constants.hpp")
 
@@ -18,6 +17,10 @@ class LEDControlService:
 
         self.rthread = SerialWriteThread(self.rser, self.rbuffer)
         self.bthread = SerialWriteThread(self.bser, self.bbuffer)
+
+        self.igp = IdlePatternGenerator(self.rbuffer, self.bbuffer, self.hp)
+        self.igp.stop = False
+        self.igp.start()
 
     def ser_write(self, text, color, immediate=False):
         if immediate:
@@ -72,6 +75,7 @@ class LEDControlService:
         self.bbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_SOLID']) % ('c', 0, 0, 0), 0))
         self.rbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_SOLID']) % ('f', 0, 0, 0), 0))
         self.bbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_SOLID']) % ('f', 0, 0, 0), 0))
+        self.igp.stop = False
 
     def clear_buffer(self):
         for i in range(len(self.rbuffer)):
@@ -86,6 +90,9 @@ class BufferEntry:
     def __init__(self, command, delay_time):
         self.command = command
         self.time = delay_time
+
+    def __str__(self):
+        return self.command + ":" + str(self.time)
 
 
 class SerialWriteThread(Thread):
@@ -110,3 +117,58 @@ class SerialWriteThread(Thread):
             if self.buffer[0].time != 0:
                 time.sleep(self.buffer[0].time)
             self.buffer.remove(0)
+
+
+class IdlePatternGenerator(Thread):
+    led_num = 100  # is the total number of LEDs on the field, should be even
+
+    def __init__(self, buf1, buf2, hp):
+        Thread.__init__(self)
+        self.stop = False
+        self.buf1 = buf1
+        self.buf2 = buf2
+        self.hp = hp
+
+    def run(self):
+        # define the current color here
+        r = 255
+        b = 0
+        g = 0
+
+        while True:
+            # See if someone told the thread to stop
+            if self.stop:
+                time.sleep(.5)
+                continue
+
+            # Generate a loop around the field
+            for i in range(self.led_num):
+                # Append the current LED command to the other thread
+                if i <= (self.led_num / 2):
+                    self.buf1.append(BufferEntry(str(self.hp.contents['LED_STRIP_ONE']) % (i, r, g, b), 0))
+                    if i == 0:
+                        self.buf2.append(BufferEntry(str(self.hp.contents['LED_STRIP_SOLID']) % ('f', 0, 0, 0), .200))
+                    else:
+                        self.buf1.append(BufferEntry(str(self.hp.contents['LED_STRIP_ONE']) % (i - 1, 0, 0, 0), .200))
+                else:
+                    self.buf2.append(BufferEntry(str(self.hp.contents['LED_STRIP_ONE']) % (i - (self.led_num / 2), r, g, b), 0))
+                    if i == (self.led_num / 2):
+                        self.buf1.append(BufferEntry(str(self.hp.contents['LED_STRIP_SOLID']) % ('f', 0, 0, 0), .200))
+                    else:
+                        self.buf2.append(BufferEntry(str(self.hp.contents['LED_STRIP_ONE']) % (i - (self.led_num / 2) - 1, 0, 0, 0), .200))
+
+                # Generate the next LED color
+                if r == 255 and b == 0 and g < 255:
+                    g += 5
+                elif g == 255 and b == 0 and r > 0:
+                    r -= 5
+                elif r == 0 and g == 255 and b < 255:
+                    b += 5
+                elif r == 0 and b == 255 and g > 0:
+                    g -= 5
+                elif g == 0 and b == 255 and r < 255:
+                    r += 5
+                elif r == 255 and g == 0 and b > 0:
+                    b -= 5
+
+            time.sleep((len(self.buf1) - 1) * .100)
