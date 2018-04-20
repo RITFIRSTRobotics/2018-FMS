@@ -14,10 +14,10 @@ class GameService:
     r_net_service = None
     scoring_service = None
 
-    def __init__(self, r_net_service, scoring_service):
+    def __init__(self, r_net_service, scoring_service, led_service):
         self.r_net_service = r_net_service
         self.scoring_service = scoring_service
-        self.led_service = scoring_service.led_service # steal the reference from the scoring service
+        self.led_service = led_service
         pass
 
     def get_remaining_time(self):

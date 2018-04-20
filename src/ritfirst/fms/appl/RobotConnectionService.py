@@ -43,12 +43,6 @@ class RobotConnectionSender(Thread):
 
     def run(self):
         while True:
-            # Write the statuses to the debug file
-            with open("data/debug.dat", "w+") as f:
-                for i, s in enumerate(self.rcs.statuses):
-                    f.seek(2*i) # need two bytes per line (one for the number, one for the data
-                    f.write(str(int(s)) + "\n")
-
             # Send out requests for data
             for robot_num in range(0, 6):
                 robot_ip = ROBOT_IPS[robot_num]

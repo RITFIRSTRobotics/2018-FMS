@@ -5,6 +5,7 @@ import time
 import threading
 
 from core.utils.HeaderParser import HeaderParser
+from ritfirst.fms.appl.DebugScreenDriver import DebugScreenDriver
 from ritfirst.fms.appl.RobotConnectionService import RobotConnectionService
 from ritfirst.fms.appl.RobotNetworkService import RobotNetworkService
 from ritfirst.fms.appl.SerialTransmissionService import SerialTransmissionService
@@ -133,10 +134,13 @@ def main():
     sts = SerialTransmissionService(rser, bser, rns, scs)
     sts.start()
 
-    game = GameService(rns, scs)
+    game = GameService(rns, scs, led)
 
     rcs = RobotConnectionService()
     rcs.start()
+
+    dsd = DebugScreenDriver(rcs, game)
+    dsd.start()
 
     def run_flask():
         # Start API
@@ -195,6 +199,7 @@ def main():
             game.stop_match()
             sts.cleanup = True
             rcs.cleanup = True
+            dsd.cleanup = True
             break
 
         print("Unknown command `" + text + "`, use `help` to see all commands", end="", file=sys.stderr)
