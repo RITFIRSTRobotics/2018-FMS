@@ -26,7 +26,7 @@ def main(stdscr):
 
         # Put data on the screen
         for i, s in enumerate(states):
-            stdscr.addstr(i + 2, 0, "[")
+            stdscr.addstr(i + 2, 0, " [")
             stdscr.addstr("  " if s == 1 or s == 2 else "--", curses.color_pair(s + 1))
             stdscr.addstr("]")
             stdscr.addstr(" Robot " + str(i))
