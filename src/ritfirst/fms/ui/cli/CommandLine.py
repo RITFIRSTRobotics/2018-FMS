@@ -3,6 +3,7 @@ from serial.tools.list_ports import comports
 import sys
 import time
 import threading
+import logging
 
 from core.utils.HeaderParser import HeaderParser
 from ritfirst.fms.appl.DebugScreenDriver import DebugScreenDriver
@@ -143,9 +144,12 @@ def main():
     dsd.start()
 
     def run_flask():
+        log = logging.getLogger('werkzeug')
+        log.setLevel(logging.ERROR)
+
         # Start API
         api = create_flask_app(game)
-        api.run()
+        api.run(host="0.0.0.0")
 
     threading.Thread(target=run_flask).start()
 

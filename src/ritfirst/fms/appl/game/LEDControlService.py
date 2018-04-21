@@ -78,11 +78,13 @@ class LEDControlService:
         self.igp.stop = False
 
     def clear_buffer(self):
-        for i in range(len(self.rbuffer)):
-            self.rbuffer.remove(0)
-        for i in range(len(self.bbuffer)):
-            self.bbuffer.remove(0)
-
+        try:
+            for i in range(len(self.rbuffer)):
+                self.rbuffer.remove(0)
+            for i in range(len(self.bbuffer)):
+                self.bbuffer.remove(0)
+        except:
+            pass
 
 class BufferEntry:
     __slots__ = ['command', 'time']
