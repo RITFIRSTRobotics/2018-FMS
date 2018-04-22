@@ -7,7 +7,7 @@ class ScoreboardModel:
 
     def start_match(self):
         if self.game_service.match_running == False:
-            self.game_service.start_match()
+#            self.game_service.start_match()
             return self.game_service, 200
         else:
             return self.game_service, 304

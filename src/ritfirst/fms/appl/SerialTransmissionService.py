@@ -53,38 +53,40 @@ class SerialTransmissionService(Thread):
                 # ding calibration done
                 print("SerialTransmissionService: calibration complete", file=sys.stderr)
             elif split[0] == controller_data_header:
-                # Controller data sent, it needs to be pushed to the data-structure
-                controller_num = int(split[1])
-                controller_sticks = [None] * 4
-                controller_sticks[0] = int(split[2])
-                controller_sticks[1] = int(split[3])
-                controller_sticks[2] = int(split[4])
-                controller_sticks[3] = int(split[5])
-
-                controller_buttons = [None] * 4
-
-                # Need to clean up the number
-                split[6] = split[6].strip()  # clean the '\n'
                 try:
-                    int(split[6])  # check the default input
-                except ValueError:
+                    # Controller data sent, it needs to be pushed to the data-structure
+                    controller_num = int(split[1])
+                    controller_sticks = [None] * 4
+                    controller_sticks[0] = int(split[2])
+                    controller_sticks[1] = int(split[3])
+                    controller_sticks[2] = int(split[4])
+                    controller_sticks[3] = int(split[5])
+
+                    controller_buttons = [None] * 4
+
+                    # Need to clean up the number
+                    split[6] = split[6].strip()  # clean the '\n'
                     try:
-                        int(split[6][0:2])  # see if the first two characters are a valid int
-                        split[6] = split[6][0:2]
+                        int(split[6])  # check the default input
                     except ValueError:
                         try:
-                            int(split[6][0])  # if not, then it has to be only the first character
-                            split[6] = split[6][0]
-                        except:
-                            split[6] = '15'
-                # Decode the button data
-                controller_buttons[0] = not bool(int(split[6]) & 1)
-                controller_buttons[1] = not bool(int(split[6]) & 2)
-                controller_buttons[2] = not bool(int(split[6]) & 4)
-                controller_buttons[3] = not bool(int(split[6]) & 8)
+                            int(split[6][0:2])  # see if the first two characters are a valid int
+                            split[6] = split[6][0:2]
+                        except ValueError:
+                            try:
+                                int(split[6][0])  # if not, then it has to be only the first character
+                                split[6] = split[6][0]
+                            except:
+                                split[6] = '15'
+                    # Decode the button data
+                    controller_buttons[0] = not bool(int(split[6]) & 1)
+                    controller_buttons[1] = not bool(int(split[6]) & 2)
+                    controller_buttons[2] = not bool(int(split[6]) & 4)
+                    controller_buttons[3] = not bool(int(split[6]) & 8)
 
-                self.out_service.append(color, controller_num, controller_sticks, controller_buttons)
-
+                    self.out_service.append(color, controller_num, controller_sticks, controller_buttons)
+                except Exception as e:
+                    print(e)
             elif split[0] == score_data_header:
                 # A score happened
                 self.score_service.scored(color, int(split[1]))
