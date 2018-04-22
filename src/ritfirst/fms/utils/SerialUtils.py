@@ -7,7 +7,7 @@ def ser_readline(ser):
         except UnicodeDecodeError:
             continue
 
-        if c == "\n" or c == "" :
+        if c == "\n" or c == "":
             ret_text += c
             break
 
@@ -16,5 +16,10 @@ def ser_readline(ser):
             continue
 
         ret_text += c # append it to the string
+
+        # Check for controller end-of-sequence
+        if ret_text.endswith(":::"):
+            ret_text += "\n"
+            break
 
     return ret_text

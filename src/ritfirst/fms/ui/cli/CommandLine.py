@@ -144,6 +144,7 @@ def main():
     dsd.start()
 
     def run_flask():
+        # get rid of access messages
         log = logging.getLogger('werkzeug')
         log.setLevel(logging.ERROR)
 
@@ -151,7 +152,7 @@ def main():
         api = create_flask_app(game)
         api.run(host="0.0.0.0")
 
-#    threading.Thread(target=run_flask).start()
+    threading.Thread(target=run_flask).start()
 
     print("Services successfully started, running command loop. Enter `help` for command list")
 

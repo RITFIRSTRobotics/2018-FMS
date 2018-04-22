@@ -86,6 +86,7 @@ class LEDControlService:
         except:
             pass
 
+
 class BufferEntry:
     __slots__ = ['command', 'time']
 
@@ -115,9 +116,9 @@ class SerialWriteThread(Thread):
                 continue
 
             # If there is data in the buffer, then write it out and sleep for the time
-            self.ser.write(self.buffer[0].command)
+            self.ser.write((str(self.buffer[0].command) + "\n").encode())
             if self.buffer[0].time != 0:
-                time.sleep(self.buffer[0].time)
+                time.sleep(float(self.buffer[0].time))
             self.buffer.remove(0)
 
 

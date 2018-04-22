@@ -1,7 +1,6 @@
 """
 A service that tests the connection between the robot and the FMS
 """
-import select
 import socket
 import sys
 from enum import Enum
@@ -118,7 +117,6 @@ class RobotConnectionReceiver(Thread):
                 break
 
 class RobotConnectionService:
-
     def __init__(self):
         self.statuses = []
         for i in range(0, 6):  # make a list of length 6 of ERROR

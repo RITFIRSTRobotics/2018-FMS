@@ -56,13 +56,13 @@ class SerialTransmissionService(Thread):
                 try:
                     # Controller data sent, it needs to be pushed to the data-structure
                     controller_num = int(split[1])
-                    controller_sticks = [None] * 4
+                    controller_sticks = [0] * 4
                     controller_sticks[0] = int(split[2])
                     controller_sticks[1] = int(split[3])
                     controller_sticks[2] = int(split[4])
                     controller_sticks[3] = int(split[5])
 
-                    controller_buttons = [None] * 4
+                    controller_buttons = [False] * 4
 
                     # Need to clean up the number
                     split[6] = split[6].strip()  # clean the '\n'
