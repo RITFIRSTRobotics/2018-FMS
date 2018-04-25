@@ -152,12 +152,12 @@ class SerialWriteThread(Thread):
                         elif self.colorlist[1] == 255 and self.colorlist[2] == 0 and self.colorlist[3] > 0:
                             self.colorlist[3] -= 5
 
-                        time.sleep(.1)
+                        time.sleep(.2)
 
                     # Release control
                     self.colorlist[0] = AllianceColor.RED if self.color == AllianceColor.BLUE else AllianceColor.BLUE
-                    time.sleep(.2)
-                    print(self.colorlist)
+                    time.sleep(15.0)
+                    continue
             if len(self.buffer) > 0:
                 try:
                     # If there is data in the buffer, then write it out and sleep for the time
@@ -175,56 +175,3 @@ class SerialWriteThread(Thread):
                 except Exception as e:
                     print(e)
                     pass
-
-class IdlePatternGenerator(Thread):
-    led_num = 212  # is the total number of LEDs on the field, should be even
-    delay_time = .3
-
-    def __init__(self, buf1, buf2, hp):
-        Thread.__init__(self)
-        self.stop = False
-        self.buf1 = buf1
-        self.buf2 = buf2
-        self.hp = hp
-
-
-    def run(self):
-        # define the current color here
-        r = 255
-        b = 0
-        g = 0
-
-        while True:
-            # See if someone told the thread to stop
-            if self.stop:
-                time.sleep(.5)
-                continue
-
-            # Generate a loop around the field
-            for i in range(self.led_num):
-                # Append the current LED command to the other thread
-                if i < (self.led_num / 2):
-                    self.buf1.append(BufferEntry(str(self.hp.contents['LED_STRIP_ONE']) % (i, r, g, b),
-                                (self.delay_time * (self.led_num / 2) if i + 1 == (self.led_num / 2) else self.delay_time)))
-                else:
-                    self.buf2.append(BufferEntry(str(self.hp.contents['LED_STRIP_ONE']) % (i, r, g, b),
-                                (-1 * self.delay_time * (self.led_num / 2) if i == (self.led_num / 2) else self.delay_time)))
-
-                # Generate the next LED color
-                if r == 255 and b == 0 and g < 255:
-                    g += 5
-                elif g == 255 and b == 0 and r > 0:
-                    r -= 5
-                elif r == 0 and g == 255 and b < 255:
-                    b += 5
-                elif r == 0 and b == 255 and g > 0:
-                    g -= 5
-                elif g == 0 and b == 255 and r < 255:
-                    r += 5
-                elif r == 255 and g == 0 and b > 0:
-                    b -= 5
-
-                #if len(self.buf1) + len(self.buf2) > 300:
-                 #'   time.sleep(.125)
-            #time.sleep((len(self.buf1) - 1) * .05)
-
