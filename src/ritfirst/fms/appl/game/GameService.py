@@ -47,7 +47,7 @@ class GameService:
         """
         Stop a match (not as sensitive/difficult as e_stopping a match, but same effect)
         """
-        if self.match_thread.remaining != 0:
+        if self.match_thread != None and self.match_thread.remaining != 0:
             self.match_thread.valid = False
         self.match_thread = None
         self.r_net_service.disabled = True

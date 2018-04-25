@@ -133,7 +133,7 @@ class SerialWriteThread(Thread):
                 continue
 
             # Check to see if idle patterns should be generated
-            if self.idle:
+            if len(self.buffer) == 0 and self.idle:
                 # See if this thread should be generating values
                 if self.color == self.colorlist[0]:
                     for i in range(self.led_num):
@@ -152,8 +152,12 @@ class SerialWriteThread(Thread):
                         elif self.colorlist[1] == 255 and self.colorlist[2] == 0 and self.colorlist[3] > 0:
                             self.colorlist[3] -= 5
 
+                        time.sleep(.1)
+
                     # Release control
                     self.colorlist[0] = AllianceColor.RED if self.color == AllianceColor.BLUE else AllianceColor.BLUE
+                    time.sleep(.2)
+                    print(self.colorlist)
             if len(self.buffer) > 0:
                 try:
                     # If there is data in the buffer, then write it out and sleep for the time
