@@ -15,17 +15,13 @@ class LEDControlService:
         self.rser = rser
         self.bser = bser
 
-        self.colorlist = [AllianceColor.RED, 255, 0, 0]
+        self.colorlist = [AllianceColor.RED, 255, 0, 0, True]
 
         self.rthread = SerialWriteThread(self.rser, self.rbuffer, AllianceColor.RED, self.colorlist, self.hp)
         self.bthread = SerialWriteThread(self.bser, self.bbuffer, AllianceColor.BLUE, self.colorlist, self.hp)
 
         self.rthread.start()
         self.bthread.start()
-
-        #self.igp = IdlePatternGenerator(self.rbuffer, self.bbuffer, self.hp)
-        #self.igp.stop = False
-        #self.igp.start()
 
     def ser_write(self, text, color, immediate=False):
         if immediate:
@@ -41,15 +37,15 @@ class LEDControlService:
 
     def scored(self, color):
 
-        #if not self.igp.stop:
-        #    return
+        if self.colorlist[4]:
+            return
 
         # make a function to do the append to the list
         def led_macro(k, loc1, loc2):
             self.rbuffer.append(
-                BufferEntry(str(self.hp.contents['LED_STRIP_NUM']) % (loc1, 10, 255 - (40 * k), 0, 0), .150))
+                BufferEntry(str(self.hp.contents['LED_STRIP_NUM']) % (loc1, 10, 255 - (45 * k), 0, 0), .100))
             self.bbuffer.append(
-                BufferEntry(str(self.hp.contents['LED_STRIP_NUM']) % (loc2, 10, 0, 0, 255 - (40 * k)), .150))
+                BufferEntry(str(self.hp.contents['LED_STRIP_NUM']) % (loc2, 10, 0, 0, 255 - (45 * k)), .100))
 
         if color == AllianceColor.RED:
             for i in range(2):
@@ -62,7 +58,7 @@ class LEDControlService:
 
     def start_match(self):
         self.clear_buffer()
-        #self.igp.stop = True
+        self.colorlist[4] = False
         self.rbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('c', 255, 0, 0), 0))
         self.bbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('c', 0, 0, 255), 0))
         self.rbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('f', 255, 0, 0), 0))
@@ -85,7 +81,7 @@ class LEDControlService:
         self.bbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_SOLID']) % ('c', 0, 0, 0), 0))
         self.rbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_SOLID']) % ('f', 0, 0, 0), 0))
         self.bbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_SOLID']) % ('f', 0, 0, 0), 0))
-        #self.igp.stop = False
+        self.colorlist[4] = True
 
     def clear_buffer(self):
         try:
@@ -111,15 +107,13 @@ class BufferEntry:
 class SerialWriteThread(Thread):
     led_num = 20
 
-    def __init__(self, ser, buffer, color, colorlist, hp, name=""):
+    def __init__(self, ser, buffer, color, colorlist, hp):
         Thread.__init__(self)
-        self.idle = True
         self.ser = ser
         self.buffer = buffer
         self.color = color
         self.colorlist = colorlist
         self.hp = hp
-        self.name = name
 
     def run(self):
         while True:
@@ -128,12 +122,12 @@ class SerialWriteThread(Thread):
                 break
 
             # See if there is anything in the buffer
-            if len(self.buffer) == 0 and not self.idle:
+            if len(self.buffer) == 0 and not self.colorlist[4]:
                 time.sleep(.1)
                 continue
 
             # Check to see if idle patterns should be generated
-            if len(self.buffer) == 0 and self.idle:
+            if len(self.buffer) == 0 and self.colorlist[4]:
                 # See if this thread should be generating values
                 if self.color == self.colorlist[0]:
                     for i in range(self.led_num):
@@ -152,11 +146,14 @@ class SerialWriteThread(Thread):
                         elif self.colorlist[1] == 255 and self.colorlist[2] == 0 and self.colorlist[3] > 0:
                             self.colorlist[3] -= 5
 
-                        time.sleep(.2)
+                        time.sleep(.01)
+
+                        if not self.colorlist[4]:
+                            break
 
                     # Release control
                     self.colorlist[0] = AllianceColor.RED if self.color == AllianceColor.BLUE else AllianceColor.BLUE
-                    time.sleep(15.0)
+                    time.sleep(15.0 if not self.colorlist[4] else .1)
                     continue
             if len(self.buffer) > 0:
                 try:
