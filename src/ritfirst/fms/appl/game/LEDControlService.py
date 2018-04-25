@@ -125,16 +125,17 @@ class SerialWriteThread(Thread):
 
             try:
                 # If there is data in the buffer, then write it out and sleep for the time
-                self.ser.write((str(self.buffer[0].command) + "\n").encode())
-                if self.buffer[0].time != 0:
-                    time.sleep(float(self.buffer[0].time))
-                self.buffer.pop(0)
+                entry = self.buffer.pop(0)
+                self.ser.write((str(entry.command) + "\n").encode())
+                if entry.time != 0:
+                    time.sleep(float(entry.time))
             except Exception as e:
                 print(e)
                 pass
 
 class IdlePatternGenerator(Thread):
     led_num = 212  # is the total number of LEDs on the field, should be even
+    delay_time = .075
 
     def __init__(self, buf1, buf2, hp):
         Thread.__init__(self)
@@ -158,10 +159,10 @@ class IdlePatternGenerator(Thread):
             # Generate a loop around the field
             for i in range(self.led_num):
                 # Append the current LED command to the other thread
-#                if i < (self.led_num / 2):
-                self.buf1.append(BufferEntry(str(self.hp.contents['LED_STRIP_ONE']) % (i, r, g, b), .075))
-#                else:
-                self.buf2.append(BufferEntry(str(self.hp.contents['LED_STRIP_ONE']) % (i, r, g, b), .075))
+                if i < (self.led_num / 2):
+                    self.buf1.append(BufferEntry(str(self.hp.contents['LED_STRIP_ONE']) % (i, r, g, b), self.delay_time))
+                else:
+                    self.buf2.append(BufferEntry(str(self.hp.contents['LED_STRIP_ONE']) % (i, r, g, b), self.delay_time))
 
                 # Generate the next LED color
                 if r == 255 and b == 0 and g < 255:
@@ -177,6 +178,6 @@ class IdlePatternGenerator(Thread):
                 elif r == 255 and g == 0 and b > 0:
                     b -= 5
 
-                if len(self.buf1) + len(self.buf2) > 300:
-                    time.sleep(.125)
+                #if len(self.buf1) + len(self.buf2) > 300:
+                 #'   time.sleep(.125)
             #time.sleep((len(self.buf1) - 1) * .05)
