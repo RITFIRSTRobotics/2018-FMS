@@ -173,7 +173,6 @@ class SerialWriteThread(Thread):
                         time.sleep(abs(entry.time))
 
                     self.ser.write((str(entry.command) + "\n").encode())
-                    print(entry.command)
 
                     if entry.time != 0 and entry.time > 0:
                         time.sleep(entry.time)
