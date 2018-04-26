@@ -18,10 +18,13 @@ class MatchTimeThread(Thread):
     def run(self):
         while self.remaining > 1:
             self.remaining -= 1
-            time.sleep(1)  # wait a second to decrease the timer
-
             if not self.valid:
                 break
+
+            if self.remaining == 30:
+                self.game.start_endgame()
+
+            time.sleep(1)  # wait a second to decrease the timer
         self.remaining = 0
 
         if self.valid:

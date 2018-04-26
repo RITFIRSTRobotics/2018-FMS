@@ -159,7 +159,6 @@ class SerialWriteThread(Thread):
 
                     # Release control
                     self.colorlist[0] = AllianceColor.RED if self.color == AllianceColor.BLUE else AllianceColor.BLUE
-                    time.sleep(15.0 if not self.colorlist[4] else .1)
                     continue
             if len(self.buffer) > 0:
                 try:
