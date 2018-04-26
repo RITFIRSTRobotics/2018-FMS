@@ -1,9 +1,10 @@
 import time
-from threading import Thread
+from threading import Thread, Lock
 
 from core.utils.AllianceColor import AllianceColor
 from core.utils.HeaderParser import HeaderParser
 
+lock = Lock()
 
 class LEDControlService:
     def __init__(self, rser, bser):
@@ -24,28 +25,29 @@ class LEDControlService:
         self.bthread.start()
 
     def ser_write(self, text, color, immediate=False):
-        if immediate:
-            if color == AllianceColor.RED:
-                self.rbuffer.insert(0, text)
-            if color == AllianceColor.BLUE:
-                self.bbuffer.insert(0, text)
-        else:
-            if color == AllianceColor.RED:
-                self.rbuffer.append(text)
-            if color == AllianceColor.BLUE:
-                self.bbuffer.append(text)
+        with lock:
+            if immediate:
+                if color == AllianceColor.RED:
+                    self.rbuffer.insert(0, text)
+                if color == AllianceColor.BLUE:
+                    self.bbuffer.insert(0, text)
+            else:
+                if color == AllianceColor.RED:
+                    self.rbuffer.append(text)
+                if color == AllianceColor.BLUE:
+                    self.bbuffer.append(text)
 
     def scored(self, color):
-
         if self.colorlist[4]:
             return
 
         # make a function to do the append to the list
         def led_macro(k, loc1, loc2):
-            self.rbuffer.append(
-                BufferEntry(str(self.hp.contents['LED_STRIP_NUM']) % (loc1, 10, 255 - (45 * k), 0, 0), .100))
-            self.bbuffer.append(
-                BufferEntry(str(self.hp.contents['LED_STRIP_NUM']) % (loc2, 10, 0, 0, 255 - (45 * k)), .100))
+            with lock:
+                self.rbuffer.append(
+                    BufferEntry(str(self.hp.contents['LED_STRIP_NUM']) % (loc1, 10, 255 - (45 * k), 0, 0), .100))
+                self.bbuffer.append(
+                    BufferEntry(str(self.hp.contents['LED_STRIP_NUM']) % (loc2, 10, 0, 0, 255 - (45 * k)), .100))
 
         if color == AllianceColor.RED:
             for i in range(2):
@@ -59,38 +61,42 @@ class LEDControlService:
     def start_match(self):
         self.clear_buffer()
         self.colorlist[4] = False
-        self.rbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('c', 255, 0, 0), 0))
-        self.bbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('c', 0, 0, 255), 0))
-        self.rbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('f', 255, 0, 0), 0))
-        self.bbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('f', 0, 0, 255), 0))
+        with lock:
+            self.rbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('c', 255, 0, 0), 0))
+            self.bbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('c', 0, 0, 255), 0))
+            self.rbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('f', 255, 0, 0), 0))
+            self.bbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('f', 0, 0, 255), 0))
 
     def almostend_match(self):
-        self.rbuffer.insert(0, BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('c', 255, 185, 0), 0))
-        self.bbuffer.insert(0, BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('c', 255, 185, 0), 0))
-        self.rbuffer.insert(0, BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('f', 255, 185, 0), .250))
-        self.bbuffer.insert(0, BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('f', 255, 185, 0), .250))
+        with lock:
+            self.rbuffer.insert(0, BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('c', 255, 185, 0), 0))
+            self.bbuffer.insert(0, BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('c', 255, 185, 0), 0))
+            self.rbuffer.insert(0, BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('f', 255, 185, 0), .250))
+            self.bbuffer.insert(0, BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('f', 255, 185, 0), .250))
 
-        self.rbuffer.insert(0, BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('c', 255, 0, 0), 0))
-        self.bbuffer.insert(0, BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('c', 0, 0, 255), 0))
-        self.rbuffer.insert(0, BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('f', 255, 0, 0), 0))
-        self.bbuffer.insert(0, BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('f', 0, 0, 255), 0))
+            self.rbuffer.insert(0, BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('c', 255, 0, 0), 0))
+            self.bbuffer.insert(0, BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('c', 0, 0, 255), 0))
+            self.rbuffer.insert(0, BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('f', 255, 0, 0), 0))
+            self.bbuffer.insert(0, BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('f', 0, 0, 255), 0))
 
     def stop_match(self):
         self.clear_buffer()
-        self.rbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_SOLID']) % ('c', 0, 0, 0), 0))
-        self.bbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_SOLID']) % ('c', 0, 0, 0), 0))
-        self.rbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_SOLID']) % ('f', 0, 0, 0), 0))
-        self.bbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_SOLID']) % ('f', 0, 0, 0), 0))
+        with lock:
+            self.rbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_SOLID']) % ('c', 0, 0, 0), 0))
+            self.bbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_SOLID']) % ('c', 0, 0, 0), 0))
+            self.rbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_SOLID']) % ('f', 0, 0, 0), 0))
+            self.bbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_SOLID']) % ('f', 0, 0, 0), 0))
         self.colorlist[4] = True
 
     def clear_buffer(self):
-        try:
-            for i in range(len(self.rbuffer)):
-                self.rbuffer.pop(0)
-            for i in range(len(self.bbuffer)):
-                self.bbuffer.pop(0)
-        except:
-            pass
+        with lock:
+            try:
+                for i in range(len(self.rbuffer)):
+                    self.rbuffer.pop(0)
+                for i in range(len(self.bbuffer)):
+                    self.bbuffer.pop(0)
+            except:
+                pass
 
 
 class BufferEntry:
@@ -158,7 +164,8 @@ class SerialWriteThread(Thread):
             if len(self.buffer) > 0:
                 try:
                     # If there is data in the buffer, then write it out and sleep for the time
-                    entry = self.buffer.pop(0)
+                    with lock:
+                        entry = self.buffer.pop(0)
 
                     # Negative time means sleep before running
                     entry.time = float(entry.time)
