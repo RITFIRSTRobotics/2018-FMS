@@ -129,7 +129,7 @@ class SerialWriteThread(Thread):
 
             # See if there is anything in the buffer
             if len(self.buffer) == 0 and not self.colorlist[4]:
-                time.sleep(.1)
+                time.sleep(.075)
                 continue
 
             # Check to see if idle patterns should be generated
@@ -152,7 +152,7 @@ class SerialWriteThread(Thread):
                         elif self.colorlist[1] == 255 and self.colorlist[2] == 0 and self.colorlist[3] > 0:
                             self.colorlist[3] -= 5
 
-                        time.sleep(.01)
+                        time.sleep(.075)
 
                         if not self.colorlist[4]:
                             break
@@ -173,6 +173,7 @@ class SerialWriteThread(Thread):
                         time.sleep(abs(entry.time))
 
                     self.ser.write((str(entry.command) + "\n").encode())
+                    print(entry.command)
 
                     if entry.time != 0 and entry.time > 0:
                         time.sleep(entry.time)
