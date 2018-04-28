@@ -40,7 +40,7 @@ class RobotNetworkService(Thread):
             # Check to see if the robot is disabled
             if self.disabled:
                 self.buffer_size = 0
-                time.sleep(.100)  # sleep for 100ms if the robots are disabled
+                time.sleep(.200)  # sleep for 200ms if the robots are disabled
                 continue
 
             # Iterate over each item in the buffer

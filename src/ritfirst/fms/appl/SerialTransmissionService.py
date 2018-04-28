@@ -48,6 +48,9 @@ class SerialTransmissionService(Thread):
                 print("SerialTransmissionService: unexpected transmission: `" + text + "`", file=sys.stderr)
                 return
 
+            if split[0] == '':
+                return
+
             # Compare the data header to the other headers
             if split[0] == calibrate_res_header:
                 # ding calibration done

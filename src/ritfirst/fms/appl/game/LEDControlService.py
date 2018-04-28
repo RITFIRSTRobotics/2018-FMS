@@ -115,7 +115,7 @@ class BufferEntry:
 
 
 class SerialWriteThread(Thread):
-    led_num = 20
+    led_num = 106
 
     def __init__(self, ser, buffer, color, colorlist, hp):
         Thread.__init__(self)
@@ -133,7 +133,7 @@ class SerialWriteThread(Thread):
 
             # See if there is anything in the buffer
             if len(self.buffer) == 0 and not self.colorlist[4]:
-                time.sleep(.075)
+                time.sleep(.1)
                 continue
 
             # Check to see if idle patterns should be generated
