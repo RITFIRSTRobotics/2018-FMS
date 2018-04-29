@@ -54,3 +54,6 @@ To run a match with scoreboard:
 
 Q) If nothing has a static IP, then how is everything configured?
 A) Things get assigned IPs in the router based on MAC address
+
+Q) What if I am a linux user or don't want to put `arudev` on my PC?
+A) You have three options: manually copy every file a directory with the same name as the .ino file, make a patch for Arduino IDE to allow for source files to be in subdirectories, or build a makefile to do everything for you.
