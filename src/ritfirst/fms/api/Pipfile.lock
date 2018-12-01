@@ -73,7 +73,7 @@
                 "sha256:8740ada95f47fa19f905772aa4932dc5512226a90c30da5672d6d6bf3dd791a7",
                 "sha256:d3f31fe7be2106b1d783cbd0765ef4e1c6615505514695f33082805f929dd584"
             ],
-            "version": "==2.15.0"
+            "version": "==2.15.1"
         },
         "pyserial": {
             "hashes": [
