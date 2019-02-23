@@ -75,8 +75,8 @@ class LEDControlService:
             self.bbuffer.insert(1, BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('f', 255, 185, 0), .75))
 
             for i in range(0, self.rthread.led_num, 2):
-                self.rbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_NUM']) % (i, 255, 0, 0), 0))
-                self.bbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_NUM']) % (i, 0, 0, 255), 0))
+                self.rbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_ONE']) % (i, 255, 0, 0), 0))
+                self.bbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_ONE']) % (i, 0, 0, 255), 0))
 
             #self.rbuffer.insert(2, BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('c', 255, 0, 0), 0))
             #self.bbuffer.insert(2, BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('c', 0, 0, 255), 0))
