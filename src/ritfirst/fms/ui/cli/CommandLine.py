@@ -30,16 +30,29 @@ def main():
         print("Not enough serial ports (only " + str(len(comports())) + " ports found)", file=sys.stderr)
         sys.exit(1)
 
-    # Pick out a serial port
+    # Helper method to get all the serial ports
+    ports = []
+    def serial_refresh():
+        ports = comports()[:]
+        tports = []
+
+        # Remove weird OS port
+        for i in range(len(ports)):
+            if ports[i].name != "ACM0":
+                tports.append(ports[i])
+        ports = tports[:]
+
+        # Print the ports
+        for i in range(len(ports)):
+            print(str(ports[i]) + " | `" + str(i) + "`")
+
 
     # Print out available ports
     print("Available serial ports:")
-    current_coms = comports()[:]
-    for i in range(len(current_coms)):
-        print(str(current_coms[i]) + " | `" + str(i) + "`")
+    serial_refresh()
 
     # Print out usage data
-    print("Use `l <index>` to send a blink, `r <index>` or `b <index>` to set an alliance's ASC to a serial port")
+    print("Use `blink <index>` to send a blink, `red <index>` or `blue <index>` to set an alliance's ASC to a serial port")
     print("Use `refresh` to recheck the serial ports", end="")
 
     rser = None
@@ -58,10 +71,9 @@ def main():
 
         text = text.lower().strip() # lowercase and clean the input text
 
+        # Refresh the serial ports
         if text == "refresh":
-            current_coms = comports()[:]
-            for i in range(len(current_coms)):
-                print(str(current_coms[i]) + " | `" + str(i) + "`")
+            serial_refresh()
             continue
 
         sections = text.split(" ")
@@ -72,9 +84,9 @@ def main():
             continue
 
         # Send a blink command
-        if sections[0] == "l":
+        if sections[0] == "blink":
             ser = serial.Serial()
-            ser.port = current_coms[int(sections[1])].device
+            ser.port = ports[int(sections[1])].device
             ser.baudrate = hp.contents['BAUD_RATE']
             ser.timeout = 1
             ser.open()
@@ -86,9 +98,9 @@ def main():
             continue
 
         # Save the red alliance's serial connection
-        if sections[0] == "r":  # todo move to initialization utils, add timeout check to ser_readline
+        if sections[0] == "red":  # todo move to initialization utils, add timeout check to ser_readline
             rser = serial.Serial()
-            rser.port = current_coms[int(sections[1])].device
+            rser.port = ports[int(sections[1])].device
             rser.baudrate = hp.contents['BAUD_RATE']
             rser.timeout = 1
             rser.open()
@@ -104,9 +116,9 @@ def main():
             continue
 
         # Save the blue alliance's serial connection
-        if sections[0] == "b":
+        if sections[0] == "blue":
             bser = serial.Serial()
-            bser.port=current_coms[int(sections[1])].device
+            bser.port=ports[int(sections[1])].device
             bser.baudrate=hp.contents['BAUD_RATE']
             bser.timeout=1
             bser.open()
@@ -153,6 +165,7 @@ def main():
         api.run(host="0.0.0.0")
 
     threading.Thread(target=run_flask).start()
+    time.sleep(.5)  # let flask print it's stuff
 
     print("Services successfully started, running command loop. Enter `help` for command list")
 
@@ -160,18 +173,21 @@ def main():
         # Console message
         print("\nfms> ", end="")
         text = input()
+        text = text.lower().strip()
+
+        commands = text.split(" ")
 
         # Help message
-        if text == "help":
+        if commands[0] == "help":
             print("help -- print this message")
             print("start -- start a match (if not already started)")
             print("stop -- stop the current match")
+            print("estop <index> -- emergency stop the robot at index (0 through 5)", end="")
             print("quit -- closes the program")
-            print("estop <index> -- emergency stop the robot at index (0 through 6)", end="")
             continue
 
         # Match start
-        if text == "start":
+        if commands[0] == "start":
             if game.match_running == False:
                 game.start_match()
             else:
@@ -179,7 +195,7 @@ def main():
             continue
 
         # Match end
-        if text == "stop":
+        if commands[0] == "stop":
             if game.match_running == True:
                 game.stop_match()
             else:
@@ -187,12 +203,12 @@ def main():
             continue
 
         # E-stop
-        if text.startswith("estop "):
-            game.e_stop_robot(int(text[6]))
+        if commands[0] == "estop" and len(commands) >= 2:
+            game.e_stop_robot(int(commands[1]))
             continue
 
         # Debugging
-        if text == "debug":
+        if commands[0] == "debug":
             print("buff: " + str(rns.buffer_size))
             print("match_time: " + str(game.match_thread.remaining if game.match_thread != None else 0))
             print("rscore: " + str(scs.red_score))  # alternatively, game.get_scores()[0]
@@ -200,7 +216,7 @@ def main():
             print("statuses: " + str(rcs.statuses))
             continue
 
-        if text == "exit":
+        if commands[0] == "exit":
             game.stop_match()
             sts.cleanup = True
             rcs.cleanup = True
