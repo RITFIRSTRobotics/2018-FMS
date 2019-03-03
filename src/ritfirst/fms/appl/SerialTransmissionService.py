@@ -36,7 +36,7 @@ class SerialTransmissionService(Thread):
         delimiter = hp.contents['DELIMITER']
 
         # Calculate the headers now to save processing time later
-        calibrate_res_header = hp.contents['INIT_RESPONSE'].split(delimiter)[0]
+        calibrate_res_header = hp.contents['CALIBRATE_RESPONSE'].split(delimiter)[0]
         controller_data_header = hp.contents['CONTROLLER_DATA'].split(delimiter)[0]
         score_data_header = hp.contents['SCORE_DATA'].split(delimiter)[0]
 
@@ -54,7 +54,8 @@ class SerialTransmissionService(Thread):
             # Compare the data header to the other headers
             if split[0] == calibrate_res_header:
                 # ding calibration done
-                print("SerialTransmissionService: calibration complete", file=sys.stderr)
+                return_code = int(split[1]) if len(split) >= 2 else 255
+                print("SerialTransmissionService: calibration complete, rc = " + str(return_code), file=sys.stderr)
             elif split[0] == controller_data_header:
                 try:
                     # Controller data sent, it needs to be pushed to the data-structure

@@ -13,8 +13,9 @@ from ritfirst.fms.appl.SerialTransmissionService import SerialTransmissionServic
 from ritfirst.fms.appl.game.GameService import GameService
 from ritfirst.fms.appl.game.LEDControlService import LEDControlService
 from ritfirst.fms.appl.game.ScoringService import ScoringService
-from ritfirst.fms.utils.SerialUtils import ser_readline
+from ritfirst.fms.utils.InitalizationUtils import init_serial
 from ritfirst.fms.api.fmsapi.index import create_flask_app
+
 
 def main():
     # Welcome message
@@ -24,7 +25,6 @@ def main():
     if len(comports()) == 0:
         print("No serial ports available", file=sys.stderr)
         sys.exit(1)
-
 
     if len(comports()) < 2:
         print("Not enough serial ports (only " + str(len(comports())) + " ports found)", file=sys.stderr)
@@ -46,7 +46,6 @@ def main():
         for i in range(len(ports)):
             print(str(ports[i]) + " | `" + str(i) + "`")
 
-
     # Print out available ports
     print("Available serial ports:")
     serial_refresh()
@@ -57,19 +56,18 @@ def main():
 
     rser = None
     bser = None
-
     hp = HeaderParser("core/serial/usbser_constants.hpp")
 
     # Loop and read in commands
     while True:
-        if rser != None and bser != None:
+        if rser is not None and bser is not None:
             print()
             break
 
         print("\nfms|ser-init> ", end="")
         text = input()
 
-        text = text.lower().strip() # lowercase and clean the input text
+        text = text.lower().strip()  # lowercase and clean the input text
 
         # Refresh the serial ports
         if text == "refresh":
@@ -92,45 +90,19 @@ def main():
             ser.open()
             time.sleep(1)
 
-            ser.write(hp.contents['BLINK_MESSAGE'].encode())
+            ser.write((hp.contents['BLINK_MESSAGE'] % 0).encode())
             ser.write("\n".encode())
             ser.close()
             continue
 
         # Save the red alliance's serial connection
-        if sections[0] == "red":  # todo move to initialization utils, add timeout check to ser_readline
-            rser = serial.Serial()
-            rser.port = ports[int(sections[1])].device
-            rser.baudrate = hp.contents['BAUD_RATE']
-            rser.timeout = 1
-            rser.open()
-            time.sleep(1)
-
-            rser.write(hp.contents['INIT_MESSAGE'].replace("%c", "r").encode())
-            rser.write("\n".encode())
-            recv = ser_readline(rser)
-            if recv.strip() != hp.contents['INIT_RESPONSE'].strip():
-                print("Invalid response `" + recv + "`, not using port", end="", file=sys.stderr)
-                rser.close()
-                rser = None
+        if sections[0] == "red":
+            rser = init_serial(ports[int(sections[1])].device, hp, 'r')
             continue
 
         # Save the blue alliance's serial connection
         if sections[0] == "blue":
-            bser = serial.Serial()
-            bser.port=ports[int(sections[1])].device
-            bser.baudrate=hp.contents['BAUD_RATE']
-            bser.timeout=1
-            bser.open()
-            time.sleep(1)
-
-            bser.write(hp.contents['INIT_MESSAGE'].replace("%c", "b").encode())
-            bser.write("\n".encode())
-            recv = ser_readline(bser)
-            if recv.strip() != hp.contents['INIT_RESPONSE'].strip():
-                print("Invalid response `" + recv + "`, not using port", end="", file=sys.stderr)
-                bser.close()
-                bser = None
+            bser = init_serial(ports[int(sections[1])].device, hp, 'b')
             continue
 
         # If the program made it this far, then it can't process it
@@ -188,7 +160,7 @@ def main():
 
         # Match start
         if commands[0] == "start":
-            if game.match_running == False:
+            if not game.match_running:
                 game.start_match()
             else:
                 print("Match already running!", end="", file=sys.stderr)
@@ -196,7 +168,7 @@ def main():
 
         # Match end
         if commands[0] == "stop":
-            if game.match_running == True:
+            if game.match_running:
                 game.stop_match()
             else:
                 print("Match not running!", end="", file=sys.stderr)
@@ -210,7 +182,7 @@ def main():
         # Debugging
         if commands[0] == "debug":
             print("buff: " + str(rns.buffer_size))
-            print("match_time: " + str(game.match_thread.remaining if game.match_thread != None else 0))
+            print("match_time: " + str(game.match_thread.remaining if game.match_thread is not None else 0))
             print("rscore: " + str(scs.red_score))  # alternatively, game.get_scores()[0]
             print("bscore: " + str(scs.blue_score))  # alternatively, game.get_scores()[1]
             print("statuses: " + str(rcs.statuses))
