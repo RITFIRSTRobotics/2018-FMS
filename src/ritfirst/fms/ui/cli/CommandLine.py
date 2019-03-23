@@ -31,7 +31,6 @@ def main():
         sys.exit(1)
 
     # Helper method to get all the serial ports
-    ports = []
     def serial_refresh():
         p = comports()[:]
         tmp = []
@@ -45,6 +44,8 @@ def main():
         # Print the ports
         for i in range(len(p)):
             print(str(p[i]) + " | `" + str(i) + "`")
+
+        return p
 
     # Print out available ports
     print("Available serial ports:")
