@@ -5,6 +5,7 @@ import time
 import threading
 import logging
 
+from core.network.constants import ROBOT_IPS
 from core.utils.HeaderParser import HeaderParser
 from ritfirst.fms.appl.DebugScreenDriver import DebugScreenDriver
 from ritfirst.fms.appl.RobotConnectionService import RobotConnectionService
@@ -114,7 +115,7 @@ def main():
     print("Starting services...")
     led = LEDControlService(rser, bser)
     scs = ScoringService(led)
-    rns = RobotNetworkService()
+    rns = RobotNetworkService(dests=range(len(ROBOT_IPS)))
     rns.disable_robots()
     rns.start()
 
