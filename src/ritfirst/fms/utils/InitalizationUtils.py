@@ -21,7 +21,7 @@ def init_serial(device, hp, color):
     # Read the response and make sure it's good
     recv = ser_readline(ser)
     parts = recv.split(hp.contents["DELIMITER"])
-    return_code = int(parts[1]) if len(parts >= 2) else 255
+    return_code = int(parts[1]) if len(parts) >= 2 else 255
     if parts[0] != hp.contents['INIT_RESPONSE'].split(hp.contents["DELIMITER"])[0].strip() \
             and return_code < 255:
         print("Invalid response `" + recv + "`, rc = " + str(return_code) + " continuing", end="", file=sys.stderr)
