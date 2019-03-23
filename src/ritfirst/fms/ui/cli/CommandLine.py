@@ -33,22 +33,22 @@ def main():
     # Helper method to get all the serial ports
     ports = []
     def serial_refresh():
-        ports = comports()[:]
-        tports = []
+        p = comports()[:]
+        tmp = []
 
         # Remove weird OS port
-        for i in range(len(ports)):
-            if ports[i].name != "ACM0":
-                tports.append(ports[i])
-        ports = tports[:]
+        for i in range(len(p)):
+            if p[i].name != "ACM0":
+                tmp.append(p[i])
+        p = tmp[:]
 
         # Print the ports
-        for i in range(len(ports)):
-            print(str(ports[i]) + " | `" + str(i) + "`")
+        for i in range(len(p)):
+            print(str(p[i]) + " | `" + str(i) + "`")
 
     # Print out available ports
     print("Available serial ports:")
-    serial_refresh()
+    ports = serial_refresh()
 
     # Print out usage data
     print("Use `blink <index>` to send a blink, `red <index>` or `blue <index>` to set an alliance's ASC to a serial port")
@@ -71,7 +71,7 @@ def main():
 
         # Refresh the serial ports
         if text == "refresh":
-            serial_refresh()
+            ports = serial_refresh()
             continue
 
         sections = text.split(" ")
