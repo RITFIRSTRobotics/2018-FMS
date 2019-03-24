@@ -51,7 +51,7 @@ class RobotNetworkService(Thread):
             if self.disabled != self._r_disabled:
                 # Send an updated status packet
                 pack = Packet(PacketType.STATUS, RobotStateData.DISABLE if self.disabled else RobotStateData.ENABLE)
-                self._packet_send(pack, range(len(self.bot_socks)), fast_mode=True)
+                self._packet_send(pack, range(len(self.bot_socks)))
                 self._r_disabled = self.disabled
                 continue
 
@@ -99,7 +99,6 @@ class RobotNetworkService(Thread):
         Send a packet to a robot_numination
         :param packet: PacketData to send
         :param robot_num: the destination (an int (the robot number) or list (which is iterated over))
-        :param fast_mode: should things be sent with fast settings?
         """
         if robot_num is None:
             return None
