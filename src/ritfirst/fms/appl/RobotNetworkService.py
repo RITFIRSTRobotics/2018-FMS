@@ -21,6 +21,7 @@ class _RobotData:
 
 class RobotNetworkService(Thread):
     def __init__(self, dests=None, fast_mode=True):
+        Thread.__init__(self)
         self.buffer = dict()
         self.cleanup = False
         self.processing_time = 0
