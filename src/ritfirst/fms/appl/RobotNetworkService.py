@@ -70,7 +70,7 @@ class RobotNetworkService(Thread):
                 except KeyError:
                     continue
 
-                self._packet_send(pack, i, True)
+                self._packet_send(pack, i)
                 self.buffer_size -= 1
                 pass
 
