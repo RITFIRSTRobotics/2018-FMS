@@ -45,10 +45,10 @@ class RobotNetworkService(Thread):
                     self.bot_socks[i].connect((dests[i], PORT))
             except Exception as e:
                 print("Failed to connect to robot %d"%i)
+                self.bot_socks[i].close()
                 socks_to_remove.append(i)
 
         for element in socks_to_remove:
-            self.bot_socks[element].close()
             self.bot_socks.pop(element)
 
     def run(self):
