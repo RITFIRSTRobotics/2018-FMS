@@ -48,8 +48,12 @@ class RobotNetworkService(Thread):
                 self.bot_socks[i].close()
                 socks_to_remove.append(i)
 
-        for element in socks_to_remove:
-            self.bot_socks.pop(element)
+        tmp_list = []
+        for i in range(len(self.bot_socks)):
+            if i not in socks_to_remove:
+                tmp_list.append(self.bot_socks[i])
+
+        self.bot_socks = tmp_list
 
     def run(self):
         while True:
