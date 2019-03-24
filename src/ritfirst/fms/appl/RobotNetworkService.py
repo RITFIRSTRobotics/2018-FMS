@@ -30,7 +30,7 @@ class RobotNetworkService(Thread):
         self._r_disabled = True # store the state that the FMS thinks that the robots are in, so that a change can be detected
         self.dests = dests
         self.bot_socks = []
-        socks_to_remove =[]
+        socks_to_remove = []
         for i in range(len(dests)):
             self.bot_socks.append(socket.socket())
             if fast_mode:
@@ -45,9 +45,10 @@ class RobotNetworkService(Thread):
                     self.bot_socks[i].connect((dests[i], PORT))
             except Exception as e:
                 print("Failed to connect to robot %d"%i)
-                self.bot_socks[i].close()
                 socks_to_remove.append(i)
+
         for element in socks_to_remove:
+            self.bot_socks[i].close()
             self.bot_socks.pop(element)
 
     def run(self):
