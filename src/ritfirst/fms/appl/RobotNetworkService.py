@@ -48,7 +48,7 @@ class RobotNetworkService(Thread):
                 socks_to_remove.append(i)
 
         for element in socks_to_remove:
-            self.bot_socks[i].close()
+            self.bot_socks[element].close()
             self.bot_socks.pop(element)
 
     def run(self):
