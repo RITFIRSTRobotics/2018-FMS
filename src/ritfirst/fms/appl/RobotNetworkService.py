@@ -45,7 +45,7 @@ class RobotNetworkService(Thread):
             except Exception as e:
                 print("Failed to connect to robot %d"%i)
                 self.bot_socks[i].close()
-                self.bot_socks.remove(i)
+                self.bot_socks.pop(i)
 
     def run(self):
         while True:
