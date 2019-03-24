@@ -61,7 +61,7 @@ class RobotNetworkService(Thread):
             if self.disabled != self._r_disabled:
                 # Send an updated status packet
                 pack = Packet(PacketType.STATUS, RobotStateData.DISABLE if self.disabled else RobotStateData.ENABLE)
-                self._packet_send(pack, range(len(self.bot_socks)))
+                self._packet_send(pack, tuple(range(len(self.bot_socks))))
                 self._r_disabled = self.disabled
                 continue
 
