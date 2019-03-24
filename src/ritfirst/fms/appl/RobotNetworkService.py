@@ -44,6 +44,8 @@ class RobotNetworkService(Thread):
                     self.bot_socks[i].connect((dests[i], PORT))
             except Exception as e:
                 print("Failed to connect to robot %d"%i)
+                self.bot_socks[i].close()
+                self.bot_socks.remove(i)
 
     def run(self):
         while True:
@@ -63,7 +65,7 @@ class RobotNetworkService(Thread):
 
             # Iterate over each item in the buffer
             start = datetime.now().microsecond
-            for i in range(6):
+            for i in range(len(self.bot_socks)):
                 # Make the packet and send it
                 try:
                     pack = Packet(PacketType.DATA, MovementData(self.buffer[i]))
