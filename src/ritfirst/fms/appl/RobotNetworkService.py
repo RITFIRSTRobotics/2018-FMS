@@ -34,13 +34,15 @@ class RobotNetworkService(Thread):
             if fast_mode:
                 self.bot_socks[i].settimeout(TIMEOUT_TIME)
                 self.bot_socks[i].setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
-
-            # If dests is a tuple of bot numbers, used the saved IPs
-            if type(self.dests[i]) is int:
-                self.bot_socks[i].connect((ROBOT_IPS[dests[i]], PORT))
-            # Assume the IPs have been provided
-            else:
-                self.bot_socks[i].connect((dests[i], PORT))
+            try:
+                # If dests is a tuple of bot numbers, used the saved IPs
+                if type(self.dests[i]) is int:
+                    self.bot_socks[i].connect((ROBOT_IPS[dests[i]], PORT))
+                # Assume the IPs have been provided
+                else:
+                    self.bot_socks[i].connect((dests[i], PORT))
+            except Exception as e:
+                print("Failed to connect to robot %d"%i)
 
     def run(self):
         while True:
@@ -67,7 +69,7 @@ class RobotNetworkService(Thread):
                 except KeyError:
                     continue
 
-                RobotNetworkService._packet_send(pack, i, True)
+                self._packet_send(pack, i, True)
                 self.buffer_size -= 1
                 pass
 
