@@ -37,8 +37,7 @@ def main():
 
         # Remove weird OS port
         for i in range(len(p)):
-            print(p[i].name)
-            if p[i].name != "ttyAMA0":
+            if p[i].name != "ttyAMA0":  # remove OS port from the list
                 tmp.append(p[i])
         p = tmp[:]
 
