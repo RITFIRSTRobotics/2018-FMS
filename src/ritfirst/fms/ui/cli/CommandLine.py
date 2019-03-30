@@ -119,7 +119,7 @@ def main():
     rns.disable_robots()
     rns.start()
 
-    sts = SerialTransmissionService(rser, bser, rns, scs)
+    sts = SerialTransmissionService(rser, bser, rns, scs, led)
     sts.start()
 
     game = GameService(rns, scs, led)

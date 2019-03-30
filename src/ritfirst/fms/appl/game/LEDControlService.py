@@ -16,10 +16,10 @@ class LEDControlService:
         self.rser = rser
         self.bser = bser
 
-        self.colorlist = [AllianceColor.RED, 255, 0, 0, True]
+        self.settings = LEDGenerationSettings(AllianceColor.RED, 255, 0, 0, True)
 
-        self.rthread = SerialWriteThread(self.rser, self.rbuffer, AllianceColor.RED, self.colorlist, self.hp)
-        self.bthread = SerialWriteThread(self.bser, self.bbuffer, AllianceColor.BLUE, self.colorlist, self.hp)
+        self.rthread = SerialWriteThread(self.rser, self.rbuffer, AllianceColor.RED, self.settings, self.hp)
+        self.bthread = SerialWriteThread(self.bser, self.bbuffer, AllianceColor.BLUE, self.settings, self.hp)
 
         self.rthread.start()
         self.bthread.start()
@@ -38,7 +38,7 @@ class LEDControlService:
                     self.bbuffer.append(text)
 
     def scored(self, color):
-        if self.colorlist[4]:
+        if self.settings.run_generator:
             return
 
         # make a function to do the append to the list
@@ -60,7 +60,16 @@ class LEDControlService:
 
     def start_match(self):
         self.clear_buffer()
-        self.colorlist[4] = False
+        
+        # Need to stop the generator
+        if self.settings.run_generator:
+            self.settings.run_generator = False
+
+            if self.settings.color == AllianceColor.RED:
+                self.rbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_AUTOWAVE_STOP']) % (0), 0))
+            if self.settings.color == AllianceColor.BLUE:
+                self.bbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_AUTOWAVE_STOP']) % (0), 0))
+
         with lock:
             self.rbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('c', 255, 0, 0), 0))
             self.bbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('c', 0, 0, 255), 0))
@@ -90,7 +99,7 @@ class LEDControlService:
             self.bbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_SOLID']) % ('c', 0, 0, 0), 0))
             self.rbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_SOLID']) % ('f', 0, 0, 0), .25))
             self.bbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_SOLID']) % ('f', 0, 0, 0), .25))
-        self.colorlist[4] = True
+        self.settings.run_generator = True
 
     def clear_buffer(self):
         with lock:
@@ -101,6 +110,14 @@ class LEDControlService:
                     self.bbuffer.pop(0)
             except:
                 pass
+
+    def add_results(self, color, r, g, b):
+        # Need to set the results
+        self.settings.color = color
+        self.settings.r = r
+        self.settings.g = g
+        self.settings.b = b
+        pass
 
 
 class BufferEntry:
@@ -114,15 +131,24 @@ class BufferEntry:
         return self.command + ":" + str(self.time)
 
 
+class LEDGenerationSettings:
+    def __init__(self, color, r, g, b, run_generator):
+        self.color = color
+        self.r = r
+        self.g = g
+        self.b = b
+        self.run_generator = run_generator
+
+
 class SerialWriteThread(Thread):
     led_num = 106
 
-    def __init__(self, ser, buffer, color, colorlist, hp):
+    def __init__(self, ser, buffer, color, settings, hp):
         Thread.__init__(self)
         self.ser = ser
         self.buffer = buffer
         self.color = color
-        self.colorlist = colorlist
+        self.settings = settings
         self.hp = hp
 
     def run(self):
@@ -132,38 +158,21 @@ class SerialWriteThread(Thread):
                 break
 
             # See if there is anything in the buffer
-            if len(self.buffer) == 0 and not self.colorlist[4]:
+            if len(self.buffer) == 0 and not self.settings.run_generator:
                 time.sleep(.1)
                 continue
 
             # Check to see if idle patterns should be generated
-            if len(self.buffer) == 0 and self.colorlist[4]:
-                # See if this thread should be generating values
-                if self.color == self.colorlist[0]:
-                    for i in range(self.led_num):
-                        self.ser.write((self.hp.contents['LED_STRIP_ONE'] % (i, self.colorlist[1], self.colorlist[2], self.colorlist[3]) + "\n").encode())
+            if len(self.buffer) == 0 and self.settings.run_generator:
+                # Tell tha ASC to generate colors
+                self.ser.write((self.hp.contents['LED_STRIP_AUTOWAVE_START'] % (self.settings.r, self.settings.g,
+                                                                                self.settings.b) + "\n").encode())
 
-                        if self.colorlist[1] == 255 and self.colorlist[3] == 0 and self.colorlist[2] < 255:
-                            self.colorlist[2] += 5
-                        elif self.colorlist[2] == 255 and self.colorlist[3] == 0 and self.colorlist[1] > 0:
-                            self.colorlist[1] -= 5
-                        elif self.colorlist[1] == 0 and self.colorlist[2] == 255 and self.colorlist[3] < 255:
-                            self.colorlist[3] += 5
-                        elif self.colorlist[1] == 0 and self.colorlist[3] == 255 and self.colorlist[2] > 0:
-                            self.colorlist[2] -= 5
-                        elif self.colorlist[2] == 0 and self.colorlist[3] == 255 and self.colorlist[1] < 255:
-                            self.colorlist[1] += 5
-                        elif self.colorlist[1] == 255 and self.colorlist[2] == 0 and self.colorlist[3] > 0:
-                            self.colorlist[3] -= 5
+                # Do nothing until you hear back the results
+                while self.settings.color == self.color and self.settings.run_generator:
+                    time.sleep(.1)
 
-                        time.sleep(.075)
-
-                        if not self.colorlist[4]:
-                            break
-
-                    # Release control
-                    self.colorlist[0] = AllianceColor.RED if self.color == AllianceColor.BLUE else AllianceColor.BLUE
-                    continue
+                continue
             if len(self.buffer) > 0:
                 try:
                     # If there is data in the buffer, then write it out and sleep for the time

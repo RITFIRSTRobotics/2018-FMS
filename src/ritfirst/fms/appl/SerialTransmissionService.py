@@ -15,7 +15,7 @@ from ritfirst.fms.utils.SerialUtils import ser_readline
 class SerialTransmissionService(Thread):
     cleanup = False
 
-    def __init__(self, rser, bser, out_service, score_service):
+    def __init__(self, rser, bser, out_service, score_service, led_service):
         """
         Initialize the SerialTransmissionService
 
@@ -23,6 +23,7 @@ class SerialTransmissionService(Thread):
         :param bser: a PySerial object that has been initialized and is transmitting data for the Blue alliance
         :param out_service: a data-structure to put the received data into
         :param score_service: a pointer to the ScoreService
+        :param led_service: a pointer to the LEDControlService
         """
         Thread.__init__(self)
 
@@ -30,6 +31,7 @@ class SerialTransmissionService(Thread):
         self.bser = bser
         self.out_service = out_service
         self.score_service = score_service
+        self.led_service = led_service
 
     def run(self):
         hp = HeaderParser("core/serial/usbser_constants.hpp")
@@ -39,6 +41,7 @@ class SerialTransmissionService(Thread):
         calibrate_res_header = hp.contents['CALIBRATE_RESPONSE'].split(delimiter)[0]
         controller_data_header = hp.contents['CONTROLLER_DATA'].split(delimiter)[0]
         score_data_header = hp.contents['SCORE_DATA'].split(delimiter)[0]
+        led_wave_results_header = hp.contents['LED_STRIP_AUTOWAVE_RESULTS'].split(delimiter)[0]
 
         def _process(text, color):
             # Split it on the delimiter
@@ -94,6 +97,9 @@ class SerialTransmissionService(Thread):
             elif split[0] == score_data_header:
                 # A score happened
                 self.score_service.scored(color, int(split[1]))
+            elif split[0] == led_wave_results_header:
+                # LED results were generated
+                self.led_service.add_results(color, int(split[1]), int(split[2]), int(split[3]))
             else:
                 # Unknown header
                 print("SerialTransmissionService: unknown header `" + split[0] + "`", file=sys.stderr)
