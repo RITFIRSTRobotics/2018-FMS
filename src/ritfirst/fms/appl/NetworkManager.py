@@ -76,7 +76,10 @@ class NetworkManager(threading.Thread):
             with self.send_lck:
                 for i in range(len(self.send_packet_queue)):
                     packet_and_dest = self.send_packet_queue.pop(0)
-                    self._transmit_packet(packet_and_dest[0], packet_and_dest[1])
+                    if self.connected[i]:
+                        self._transmit_packet(packet_and_dest[0], packet_and_dest[1])
+                    else:
+                        self.send_packet(packet_and_dest[0], packet_and_dest[1])
 
             # Check and see if any robots have (seemingly) lost connection and try to reconnect
             for i in range(len(self.bot_mgnrs)):
