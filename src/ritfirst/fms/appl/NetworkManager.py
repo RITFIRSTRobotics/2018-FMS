@@ -103,7 +103,7 @@ class NetworkManager(threading.Thread):
         self.bot_mgnrs[mgr_nbr].start()
 
     def _transmit_packet(self, packet, destination):
-        self.bot_mgnrs[destination].send_packet(packet)
+        self.bot_mgnrs[destination].send_packet(jsonpickle.encode(packet))
 
     def send_packet(self, packet, bot_num):
         with self.send_lck:
