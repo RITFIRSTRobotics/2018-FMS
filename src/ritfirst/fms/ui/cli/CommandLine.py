@@ -9,6 +9,7 @@ from core.network.constants import ROBOT_IPS
 from core.utils.HeaderParser import HeaderParser
 from ritfirst.fms.appl.DebugScreenDriver import DebugScreenDriver
 from ritfirst.fms.appl.RobotConnectionService import RobotConnectionService
+from ritfirst.fms.appl.RobotControllerService import RobotControllerService
 from ritfirst.fms.appl.RobotNetworkService import RobotNetworkService
 from ritfirst.fms.appl.SerialTransmissionService import SerialTransmissionService
 from ritfirst.fms.appl.game.GameService import GameService
@@ -114,14 +115,13 @@ def main():
     print("Starting services...")
     led = LEDControlService(rser, bser)
     scs = ScoringService(led)
-    rns = RobotNetworkService(dests=range(len(ROBOT_IPS)))
-    rns.disable_robots()
-    rns.start()
+    rcs = RobotControllerService()
+    rcs.disable_robots()
 
-    sts = SerialTransmissionService(rser, bser, rns, scs, led)
+    sts = SerialTransmissionService(rser, bser, rcs, scs, led)
     sts.start()
 
-    game = GameService(rns, scs, led)
+    game = GameService(rcs, scs, led)
 
     rcs = RobotConnectionService()
     rcs.start()
@@ -183,7 +183,7 @@ def main():
 
         # Debugging
         if commands[0] == "debug":
-            print("buff: " + str(rns.buffer_size))
+            print("buff: " + str(0) + "(Deprecated)")
             print("match_time: " + str(game.match_thread.remaining if game.match_thread is not None else 0))
             print("rscore: " + str(scs.red_score))  # alternatively, game.get_scores()[0]
             print("bscore: " + str(scs.blue_score))  # alternatively, game.get_scores()[1]

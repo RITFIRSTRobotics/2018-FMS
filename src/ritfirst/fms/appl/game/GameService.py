@@ -35,7 +35,7 @@ class GameService:
         Start the match
         """
         self.match_thread = MatchTimeThread(self)
-        self.r_net_service.disabled = False
+        self.r_net_service.enable_robots()
         self.match_thread.start()
         self.match_running = True
         self.led_service.start_match()
@@ -50,7 +50,7 @@ class GameService:
         if self.match_thread != None and self.match_thread.remaining != 0:
             self.match_thread.valid = False
         self.match_thread = None
-        self.r_net_service.disabled = True
+        self.r_net_service.disable_robots()
         self.match_running = False
         self.led_service.stop_match()
 

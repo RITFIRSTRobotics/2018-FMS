@@ -91,7 +91,7 @@ class SerialTransmissionService(Thread):
                     controller_buttons[2] = not bool(int(split[6]) & 4)
                     controller_buttons[3] = not bool(int(split[6]) & 8)
 
-                    self.out_service.append(color, controller_num, controller_sticks, controller_buttons)
+                    self.out_service.send_controller_data(color, controller_num, controller_sticks, controller_buttons)
                 except Exception as e:
                     print(e)
             elif split[0] == score_data_header:
