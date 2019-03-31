@@ -19,7 +19,6 @@ class NetworkManager(threading.Thread):
         self.send_lck = threading.Lock()
         self.recv_packet_queue = []
         self.recv_lck = threading.Lock()
-        self.bot_mgnrs = []
         self.fast_mode = fast_mode
         self.reconnect_after_initial_failure = reconnect_after_initial_failure
         # If they didn't give us a list of destinations
@@ -28,6 +27,7 @@ class NetworkManager(threading.Thread):
             self.dests = list(range(6))
 
         # Create RobotNetworkManagers for each of the robots passed to us, and start them
+        self.bot_mgnrs = [None] * len(self.dests)
         for i in range(len(self.dests)):
             sockets = list()
             sockets.append(socket.socket())
