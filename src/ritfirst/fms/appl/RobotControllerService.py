@@ -19,7 +19,7 @@ class RobotControllerService(threading.Thread):
         threading.Thread.__init__(self)
         self.logger = logger
         self.disabled = True
-        self.dests = list(range(len(num_dests)))
+        self.dests = list(range(num_dests))
         self.ntwk_mgnr = NetworkManager(logger, self.dests, fast_mode, reconnect_after_initial_failure)
 
     def disable_robots(self):
