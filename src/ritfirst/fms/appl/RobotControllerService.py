@@ -1,9 +1,9 @@
 import threading
 from core.network.constants import *
-from network.Packet import Packet, PacketType
-from network.packetdata.RobotStateData import RobotStateData
+from core.network.Packet import Packet, PacketType
+from core.network.packetdata.RobotStateData import RobotStateData
 from ritfirst.fms.appl.NetworkManager import NetworkManager
-from utils.AllianceColor import AllianceColor
+from core.utils.AllianceColor import AllianceColor
 
 
 class _RobotData:
