@@ -37,9 +37,8 @@ class RobotNetworkManager(threading.Thread):
         while self._is_connected and self._keep_running:
             # There's a packet to receive
             if select.select((self.csock,), (), (), 0):
-                with self.in_queue_lock:
-                    pack = self.csock.recv(BUFFER_SIZE).decode()
-                    self.in_queue.append(pack)
+                pack = self.csock.recv(BUFFER_SIZE).decode()
+                self.in_queue.append(pack)
             if self.out_queue:
                 with self.out_queue_lock:
                     print("RobotNetworkManager sending packet to %d" % self.destination)
@@ -48,16 +47,14 @@ class RobotNetworkManager(threading.Thread):
         self.csock.close()
 
     def send_packet(self, packet):
-        with self.out_queue_lock:
-            self.out_queue.append(packet)
+        self.out_queue.append(packet)
 
     def get_packet(self):
         with self.in_queue_lock:
             self.in_queue.pop(0)
 
     def has_packet(self):
-        with self.in_queue_lock:
-            return len(self.in_queue) > 0
+        return len(self.in_queue) > 0
 
     def failed_to_connect(self):
         return self._tried_init and (not self._is_connected)

@@ -42,7 +42,6 @@ class NetworkManager(threading.Thread):
 
     def run(self):
         while self._keep_running:
-            print("Entering run loop")
             # If any of the robots timed out the last time they tried to connect, either try and reconnect or stop
             # bothering with it
             for i in range(len(self.bot_mgnrs)):
@@ -62,9 +61,11 @@ class NetworkManager(threading.Thread):
                         self.send_packet(jsonpickle.encode(packet), i)
                 self.time_since_last_request = time.time()
 
+            print("Before receive packets")
             # Poll all the bot managers for packets
             for i in range(len(self.bot_mgnrs)):
                 if self.bot_mgnrs[i].has_packet():
+                    print ("Into the if")
                     self.time_of_last_response[i] = time.time()
                     pack = jsonpickle.decode(self.bot_mgnrs[i].get_packet())
                     if pack.type == PacketType.RESPONSE:
@@ -72,13 +73,14 @@ class NetworkManager(threading.Thread):
                         self.bot_statuses[i] = pack.data
                     else:
                         with self.recv_lck:
+                            # TODO make this packet and destination
                             self.recv_packet_queue.append(pack)
 
             # Send out all of the packets in our queue
             with self.send_lck:
                 for i in range(len(self.send_packet_queue)):
                     packet_and_dest = self.send_packet_queue.pop(0)
-                    if self.connected[i]:
+                    if self.connected[packet_and_dest[1]]:
                         print("Transmitting packet to robot %d" % i)
                         self._transmit_packet(packet_and_dest[0], packet_and_dest[1])
                     else:
