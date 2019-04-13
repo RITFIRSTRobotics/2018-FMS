@@ -59,14 +59,13 @@ class LEDControlService:
                     led_macro(j, 'f', 'c')
 
     def start_match(self):
-        self.clear_buffer()
-        
         # Need to stop the generator
         if self.settings.run_generator:
             self.settings.run_generator = False
 
             self.rbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_AUTOWAVE_STOP']) % (0), 0))
             self.bbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_AUTOWAVE_STOP']) % (0), 0))
+        self.clear_buffer()
 
         with lock:
             self.rbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('c', 255, 0, 0), 0))
@@ -98,6 +97,7 @@ class LEDControlService:
             self.rbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_SOLID']) % ('f', 0, 0, 0), .25))
             self.bbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_SOLID']) % ('f', 0, 0, 0), .25))
         self.settings.run_generator = True
+        self.settings.num_running = 0
 
     def clear_buffer(self):
         with lock:
@@ -115,6 +115,8 @@ class LEDControlService:
         self.settings.r = r
         self.settings.g = g
         self.settings.b = b
+
+        self.settings.num_running -=1
         pass
 
 
@@ -136,6 +138,7 @@ class LEDGenerationSettings:
         self.g = g
         self.b = b
         self.run_generator = run_generator
+        self.num_running = 0
 
 
 class SerialWriteThread(Thread):
@@ -161,8 +164,9 @@ class SerialWriteThread(Thread):
                 continue
 
             # Check to see if idle patterns should be generated
-            if len(self.buffer) == 0 and self.settings.run_generator and self.settings.color == self.color:
+            if len(self.buffer) == 0 and self.settings.run_generator and self.settings.color == self.color and self.settings.num_running <= 0:
                 # Tell tha ASC to generate colors
+                self.settings.num_running += 1
                 self.ser.write((self.hp.contents['LED_STRIP_AUTOWAVE_START'] % (self.settings.r, self.settings.g,
                                                                                 self.settings.b) + "\n").encode())
 
