@@ -11,9 +11,8 @@ from core.network.packetdata.RobotStateData import RobotStateData
 
 
 class NetworkManager(threading.Thread):
-    def __init__(self, logger, dests=None, fast_mode=False, reconnect_after_initial_failure = False):
+    def __init__(self, dests=None, fast_mode=False, reconnect_after_initial_failure = False):
         threading.Thread.__init__(self)
-        self.logger = logger
         self._keep_running = True
         self.send_packet_queue = []
         self.send_lck = threading.Lock()
@@ -28,13 +27,13 @@ class NetworkManager(threading.Thread):
 
         # Create RobotNetworkManagers for each of the robots passed to us, and start them
         self.bot_mgnrs = [None] * len(self.dests)
+        sockets = list()
         for i in range(len(self.dests)):
-            sockets = list()
             sockets.append(socket.socket())
             if fast_mode:
                 sockets[i].settimeout(TIMEOUT_TIME)
                 sockets[i].setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
-            self.bot_mgnrs[i] = RobotNetworkManager(logger, self.dests[i], sockets[i])
+            self.bot_mgnrs[i] = RobotNetworkManager(self.dests[i], sockets[i])
             self.bot_mgnrs[i].start()
         self.connected = [True] * len(self.dests)
         self.bot_statuses = [RobotStateData.DISABLE] * len(self.dests)
@@ -43,6 +42,7 @@ class NetworkManager(threading.Thread):
 
     def run(self):
         while self._keep_running:
+            print("Entering run loop")
             # If any of the robots timed out the last time they tried to connect, either try and reconnect or stop
             # bothering with it
             for i in range(len(self.bot_mgnrs)):
@@ -55,6 +55,7 @@ class NetworkManager(threading.Thread):
 
             # If it's been awhile since we've sent a request packet, send another round to all of the connected robots
             if time.time() - self.time_since_last_request > .750:
+                print ("Sending out request status packets")
                 for i in range(len(self.bot_mgnrs)):
                     if self.connected[i]:
                         packet = Packet(PacketType.REQUEST, RequestData.STATUS)
@@ -67,6 +68,7 @@ class NetworkManager(threading.Thread):
                     self.time_of_last_response[i] = time.time()
                     pack = jsonpickle.decode(self.bot_mgnrs[i].get_packet())
                     if pack.type == PacketType.RESPONSE:
+                        print("Got response packet from robot %d" % i)
                         self.bot_statuses[i] = pack.data
                     else:
                         with self.recv_lck:
@@ -77,13 +79,16 @@ class NetworkManager(threading.Thread):
                 for i in range(len(self.send_packet_queue)):
                     packet_and_dest = self.send_packet_queue.pop(0)
                     if self.connected[i]:
+                        print("Transmitting packet to robot %d" % i)
                         self._transmit_packet(packet_and_dest[0], packet_and_dest[1])
                     else:
+                        print("Requeuing packet to robot %d"%i)
                         self.send_packet(packet_and_dest[0], packet_and_dest[1])
 
             # Check and see if any robots have (seemingly) lost connection and try to reconnect
             for i in range(len(self.bot_mgnrs)):
                 if self.connected[i] and time.time() - self.time_of_last_response[i] > TIMEOUT_TIME:
+                    print("Attempting to reconnect to bot %d" %i)
                     self.connected[i] = False
                     self._attempt_to_reconnect_bot_mgr(i)
                     self.connected[i] = True
@@ -99,7 +104,7 @@ class NetworkManager(threading.Thread):
         if self.fast_mode:
             sock.settimeout(TIMEOUT_TIME)
             sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
-        self.bot_mgnrs[mgr_nbr] = RobotNetworkManager(self.logger, self.dests[mgr_nbr], sock)
+        self.bot_mgnrs[mgr_nbr] = RobotNetworkManager(self.dests[mgr_nbr], sock)
         self.bot_mgnrs[mgr_nbr].start()
 
     def _transmit_packet(self, packet, destination):

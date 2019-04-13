@@ -13,14 +13,13 @@ class _RobotData:
         self.buttons = buttons
 
 
-class RobotControllerService(threading.Thread):
+class RobotControllerService:
 
-    def __init__(self, logger=None, num_dests=6, fast_mode=False, reconnect_after_initial_failure=False):
-        threading.Thread.__init__(self)
-        self.logger = logger
+    def __init__(self, num_dests=6, fast_mode=False, reconnect_after_initial_failure=False):
         self.disabled = True
         self.dests = list(range(num_dests))
-        self.ntwk_mgnr = NetworkManager(logger, self.dests, fast_mode, reconnect_after_initial_failure)
+        self.ntwk_mgnr = NetworkManager(self.dests, fast_mode, reconnect_after_initial_failure)
+        self.ntwk_mgnr.start()
 
     def disable_robots(self):
         if not self.disabled:

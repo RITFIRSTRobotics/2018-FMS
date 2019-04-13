@@ -8,6 +8,7 @@ import logging
 from core.network.constants import ROBOT_IPS
 from core.utils.HeaderParser import HeaderParser
 from ritfirst.fms.appl.DebugScreenDriver import DebugScreenDriver
+from ritfirst.fms.appl.NetworkManager import NetworkManager
 from ritfirst.fms.appl.RobotConnectionService import RobotConnectionService
 from ritfirst.fms.appl.RobotControllerService import RobotControllerService
 from ritfirst.fms.appl.RobotNetworkService import RobotNetworkService
@@ -122,9 +123,6 @@ def main():
     sts.start()
 
     game = GameService(rcs, scs, led)
-
-    rcs = RobotConnectionService()
-    rcs.start()
 
     dsd = DebugScreenDriver(rcs, game)
     dsd.start()

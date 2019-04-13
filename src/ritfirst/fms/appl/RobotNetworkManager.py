@@ -5,9 +5,8 @@ from core.network.constants import *
 
 
 class RobotNetworkManager(threading.Thread):
-    def __init__(self, logger, destination, csock=None):
+    def __init__(self, destination, csock=None):
         threading.Thread.__init__(self)
-        self.logger = logger
         self.out_queue = []
         self.in_queue = []
         self.csock = csock
@@ -30,8 +29,7 @@ class RobotNetworkManager(threading.Thread):
             else:
                 self.csock.connect((self.destination, PORT))
             self._is_connected = True
-        except socket.timeout:
-            self.logger.error("Failed to connect to %s during init" % str(self.destination))
+        except:
             self._is_connected = False
         self._tried_init = True
 
@@ -44,6 +42,7 @@ class RobotNetworkManager(threading.Thread):
                     self.in_queue.append(pack)
             if self.out_queue:
                 with self.out_queue_lock:
+                    print("RobotNetworkManager sending packet to %d" % self.destination)
                     pack = self.out_queue.pop(0)
                     self.csock.send(pack.encode())
         self.csock.close()

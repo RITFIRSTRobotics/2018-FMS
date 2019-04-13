@@ -13,8 +13,8 @@ class DebugScreenDriver(Thread):
         while True:
             # Write data to the debug file
             f = open("data/debug.dat", "w")
-            for s in self.rcs.statuses:
-                f.write(str(int(s)) + "\n")
+            # for s in self.rcs.statuses:
+            #     f.write(str(int(s)) + "\n")
             if self.game.match_thread is None:
                 f.write("0\n")
             else:
