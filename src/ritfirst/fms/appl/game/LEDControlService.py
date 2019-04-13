@@ -117,6 +117,8 @@ class LEDControlService:
         self.settings.b = b
 
         self.settings.num_running -=1
+
+        print("recv: " + color)
         pass
 
 
@@ -167,14 +169,11 @@ class SerialWriteThread(Thread):
             if len(self.buffer) == 0 and self.settings.run_generator and self.settings.color == self.color and self.settings.num_running <= 0:
                 # Tell tha ASC to generate colors
                 self.settings.num_running += 1
+                print("start: " + self.color)
                 self.ser.write((self.hp.contents['LED_STRIP_AUTOWAVE_START'] % (self.settings.r, self.settings.g,
                                                                                 self.settings.b) + "\n").encode())
-
-                # Do nothing until you hear back the results
-                while self.settings.color == self.color and self.settings.run_generator:
-                    time.sleep(.1)
-
                 continue
+
             if len(self.buffer) > 0:
                 try:
                     # If there is data in the buffer, then write it out and sleep for the time
