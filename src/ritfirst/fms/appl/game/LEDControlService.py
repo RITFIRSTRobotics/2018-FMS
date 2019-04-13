@@ -163,7 +163,7 @@ class SerialWriteThread(Thread):
                 continue
 
             # Check to see if idle patterns should be generated
-            if len(self.buffer) == 0 and self.settings.run_generator:
+            if len(self.buffer) == 0 and self.settings.run_generator and self.settings.color == self.color:
                 # Tell tha ASC to generate colors
                 self.ser.write((self.hp.contents['LED_STRIP_AUTOWAVE_START'] % (self.settings.r, self.settings.g,
                                                                                 self.settings.b) + "\n").encode())
