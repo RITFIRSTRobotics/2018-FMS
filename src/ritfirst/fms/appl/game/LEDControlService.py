@@ -65,10 +65,8 @@ class LEDControlService:
         if self.settings.run_generator:
             self.settings.run_generator = False
 
-            if self.settings.color == AllianceColor.RED:
-                self.rbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_AUTOWAVE_STOP']) % (0), 0))
-            if self.settings.color == AllianceColor.BLUE:
-                self.bbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_AUTOWAVE_STOP']) % (0), 0))
+            self.rbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_AUTOWAVE_STOP']) % (0), 0))
+            self.bbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_AUTOWAVE_STOP']) % (0), 0))
 
         with lock:
             self.rbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('c', 255, 0, 0), 0))
