@@ -53,8 +53,9 @@ class NetworkManager(threading.Thread):
                         self.bot_mgnrs[i].stop()
 
             # If it's been awhile since we've sent a request packet, send another round to all of the connected robots
+            print("Time since last request: %f" % time.time() - self.time_since_last_request)
             if time.time() - self.time_since_last_request > .750:
-                print ("Sending out request status packets")
+                print("Sending out request status packets")
                 for i in range(len(self.bot_mgnrs)):
                     if self.connected[i]:
                         packet = Packet(PacketType.REQUEST, RequestData.STATUS)
