@@ -45,7 +45,7 @@ class NetworkManager(threading.Thread):
             # If any of the robots timed out the last time they tried to connect, either try and reconnect or stop
             # bothering with it
             for i in range(len(self.bot_mgnrs)):
-                if self.bot_mgnrs[i].failed_to_connect():
+                if self.bot_mgnrs[i].failed_to_connect() or self.connected[i] == False:
                     self.connected[i] = False
                     if self.reconnect_after_initial_failure:
                         self._attempt_to_reconnect_bot_mgr(i)
@@ -73,7 +73,6 @@ class NetworkManager(threading.Thread):
                         self.bot_statuses[i] = pack.data
                     else:
                         with self.recv_lck:
-                            # TODO make this packet and destination
                             self.recv_packet_queue.append(pack)
 
             # Send out all of the packets in our queue
@@ -90,10 +89,7 @@ class NetworkManager(threading.Thread):
             # Check and see if any robots have (seemingly) lost connection and try to reconnect
             for i in range(len(self.bot_mgnrs)):
                 if self.connected[i] and time.time() - self.time_of_last_response[i] > TIMEOUT_TIME:
-                    print("Attempting to reconnect to bot %d" %i)
                     self.connected[i] = False
-                    self._attempt_to_reconnect_bot_mgr(i)
-                    self.connected[i] = True
         # We've been told to stop, so stop all of our children and join on them
         for i in range(len(self.bot_mgnrs)):
             self.bot_mgnrs[i].stop()
@@ -108,6 +104,7 @@ class NetworkManager(threading.Thread):
             sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
         self.bot_mgnrs[mgr_nbr] = RobotNetworkManager(self.dests[mgr_nbr], sock)
         self.bot_mgnrs[mgr_nbr].start()
+        print("Attempted to reconnect to bot %d" % mgr_nbr)
 
     def _transmit_packet(self, packet, destination):
         self.bot_mgnrs[destination].send_packet(jsonpickle.encode(packet))
