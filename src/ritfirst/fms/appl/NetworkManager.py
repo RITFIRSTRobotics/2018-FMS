@@ -65,7 +65,7 @@ class NetworkManager(threading.Thread):
                 for i in range(len(self.bot_mgnrs)):
                     if self.connected[i]:
                         packet = Packet(PacketType.REQUEST, RequestData.STATUS)
-                        self.send_packet(jsonpickle.encode(packet), i)
+                        self.send_packet(packet, i)
                 self.time_since_last_request = time.time()
 
             # Poll all the bot managers for packets
