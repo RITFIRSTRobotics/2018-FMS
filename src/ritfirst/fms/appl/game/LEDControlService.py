@@ -6,6 +6,8 @@ from core.utils.HeaderParser import HeaderParser
 
 lock = Lock()
 
+LED_SLEEP_TIME = .1
+
 class LEDControlService:
     def __init__(self, rser, bser):
         self.hp = HeaderParser("core/serial/usbser_constants.hpp")
@@ -116,8 +118,10 @@ class LEDControlService:
         self.settings.g = g
         self.settings.b = b
 
-        self.settings.num_running -=1
-        pass
+        if color == AllianceColor.RED:
+            self.bser.start_generator()
+        elif color == AllianceColor.BLUE:
+            self.rser.start_generator()
 
 
 class BufferEntry:
@@ -158,19 +162,7 @@ class SerialWriteThread(Thread):
             if self.buffer is None:
                 break
 
-            # See if there is anything in the buffer
-            if len(self.buffer) == 0 and not self.settings.run_generator:
-                time.sleep(.1)
-                continue
-
-            # Check to see if idle patterns should be generated
-            if len(self.buffer) == 0 and self.settings.run_generator and self.settings.color == self.color and self.settings.num_running <= 0:
-                # Tell tha ASC to generate colors
-                self.settings.num_running += 1
-                self.ser.write((self.hp.contents['LED_STRIP_AUTOWAVE_START'] % (self.settings.r, self.settings.g,
-                                                                                self.settings.b) + "\n").encode())
-                continue
-
+            # Process the buffer
             if len(self.buffer) > 0:
                 try:
                     # If there is data in the buffer, then write it out and sleep for the time
@@ -189,3 +181,14 @@ class SerialWriteThread(Thread):
                 except Exception as e:
                     print(e)
                     pass
+
+            else:
+                # Don't hog CPU cycles
+                time.sleep(LED_SLEEP_TIME)
+
+    def start_generator(self):
+        with lock:
+            self.buffer.append(BufferEntry((self.hp.contents['LED_STRIP_AUTOWAVE_START'] %
+                                            (self.settings.r, self.settings.g, self.settings.b) + "\n").encode(), 0))
+
+
