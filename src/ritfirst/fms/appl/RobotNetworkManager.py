@@ -1,6 +1,7 @@
 import threading
 import select
 import socket
+import time
 from core.network.constants import *
 
 
@@ -39,11 +40,13 @@ class RobotNetworkManager(threading.Thread):
             if select.select((self.csock,), (), (), 0)[0]:
                 pack = self.csock.recv(BUFFER_SIZE).decode()
                 self.in_queue.append(pack)
-            if self.out_queue:
+            elif self.out_queue:
                 with self.out_queue_lock:
                     pack = self.out_queue.pop(0)
                     print("Robot %d: "%self.destination + str(pack.encode()))
                     self.csock.send(pack.encode())
+            else:
+                time.sleep(.05)
         self.csock.close()
 
     def send_packet(self, packet):
