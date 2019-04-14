@@ -9,6 +9,8 @@ from core.network.packetdata.RequestData import RequestData
 from ritfirst.fms.appl.RobotNetworkManager import RobotNetworkManager
 from core.network.packetdata.RobotStateData import RobotStateData
 
+BURST_PACKET_LIMIT = 100
+
 
 class NetworkManager(threading.Thread):
     def __init__(self, dests=None, fast_mode=False, reconnect_after_initial_failure = False):
@@ -39,13 +41,19 @@ class NetworkManager(threading.Thread):
         self.bot_statuses = [RobotStateData.DISABLE] * len(self.dests)
         self.time_since_last_request = time.time()
         self.time_of_last_response = [time.time()] * len(self.dests)
+        self._stored_init_finished = [False] * len(self.dests)
 
     def run(self):
         while self._keep_running:
             # If any of the robots timed out the last time they tried to connect, either try and reconnect or stop
             # bothering with it
             for i in range(len(self.bot_mgnrs)):
-                if self.bot_mgnrs[i].failed_to_connect() or self.connected[i] == False:
+                # If the robot hadn't finished initialization of the connection last time we checked and they have now
+                # Store the time they finished init to prevent initialization timeouts
+                if not self._stored_init_finished[i] and self.bot_mgnrs[i].finished_init():
+                    self._stored_init_finished[i] = True
+                    self.time_of_last_response[i] = time.time()
+                if self.bot_mgnrs[i].failed_to_connect() or self.connected[i] is False:
                     self.connected[i] = False
                     if self.reconnect_after_initial_failure:
                         self._attempt_to_reconnect_bot_mgr(i)
@@ -53,16 +61,13 @@ class NetworkManager(threading.Thread):
                         self.bot_mgnrs[i].stop()
 
             # If it's been awhile since we've sent a request packet, send another round to all of the connected robots
-            print("Time since last request: %f" % time.time() - self.time_since_last_request)
             if time.time() - self.time_since_last_request > .750:
-                print("Sending out request status packets")
                 for i in range(len(self.bot_mgnrs)):
                     if self.connected[i]:
                         packet = Packet(PacketType.REQUEST, RequestData.STATUS)
                         self.send_packet(jsonpickle.encode(packet), i)
                 self.time_since_last_request = time.time()
 
-            print("Before receive packets")
             # Poll all the bot managers for packets
             for i in range(len(self.bot_mgnrs)):
                 if self.bot_mgnrs[i].has_packet():
@@ -78,18 +83,16 @@ class NetworkManager(threading.Thread):
 
             # Send out all of the packets in our queue
             with self.send_lck:
-                for i in range(len(self.send_packet_queue)):
+                numPackets = len(self.send_packet_queue)
+                for i in range(min(numPackets, BURST_PACKET_LIMIT)):
                     packet_and_dest = self.send_packet_queue.pop(0)
                     if self.connected[packet_and_dest[1]]:
-                        print("Transmitting packet to robot %d" % i)
                         self._transmit_packet(packet_and_dest[0], packet_and_dest[1])
-                    else:
-                        print("Requeuing packet to robot %d"%i)
-                        self.send_packet(packet_and_dest[0], packet_and_dest[1])
 
             # Check and see if any robots have (seemingly) lost connection and try to reconnect
             for i in range(len(self.bot_mgnrs)):
-                if self.connected[i] and time.time() - self.time_of_last_response[i] > TIMEOUT_TIME:
+                if self.bot_mgnrs[i].finished_init() and self.connected[i] and self.time_since_last_request - self.time_of_last_response[i] > TIMEOUT_TIME:
+                    print("Robot %d lost connection!"%i)
                     self.connected[i] = False
         # We've been told to stop, so stop all of our children and join on them
         for i in range(len(self.bot_mgnrs)):
@@ -111,8 +114,7 @@ class NetworkManager(threading.Thread):
         self.bot_mgnrs[destination].send_packet(jsonpickle.encode(packet))
 
     def send_packet(self, packet, bot_num):
-        with self.send_lck:
-            self.send_packet_queue.append((packet, bot_num))
+        self.send_packet_queue.append((packet, bot_num))
 
     def get_next_packet(self):
         with self.recv_lck:
