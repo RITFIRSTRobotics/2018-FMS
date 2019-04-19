@@ -1,6 +1,7 @@
 import threading
 from core.network.constants import *
 from core.network.Packet import Packet, PacketType
+from core.network.packetdata.MovementData import MovementData
 from core.network.packetdata.RobotStateData import RobotStateData
 from ritfirst.fms.appl.NetworkManager import NetworkManager
 from core.utils.AllianceColor import AllianceColor
@@ -44,7 +45,7 @@ class RobotControllerService:
         # Put the blue controllers after the red controller
         if color == AllianceColor.BLUE:
             controller_num += 3
-        pack = Packet(PacketType.DATA, _RobotData(controller_sticks, controller_buttons))
+        pack = Packet(PacketType.DATA, MovementData(_RobotData(controller_sticks, controller_buttons)))
         self.ntwk_mgnr.send_packet(pack, controller_num)
 
     def cleanup(self):
