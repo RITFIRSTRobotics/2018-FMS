@@ -74,7 +74,6 @@ class NetworkManager(threading.Thread):
                     self.time_of_last_response[i] = time.time()
                     pack = jsonpickle.decode(self.bot_mgnrs[i].get_packet())
                     if pack.type == PacketType.RESPONSE:
-                        print("Got response packet from robot %d" % i)
                         self.bot_statuses[i] = pack.data
                     else:
                         with self.recv_lck:
@@ -83,10 +82,13 @@ class NetworkManager(threading.Thread):
             # Send out all of the packets in our queue
             with self.send_lck:
                 numPackets = len(self.send_packet_queue)
-                for i in range(min(numPackets, BURST_PACKET_LIMIT)):
-                    packet_and_dest = self.send_packet_queue.pop(0)
-                    if self.connected[packet_and_dest[1]]:
-                        self._transmit_packet(packet_and_dest[0], packet_and_dest[1])
+                if numPackets > 0:
+                    for i in range(min(numPackets, BURST_PACKET_LIMIT)):
+                        packet_and_dest = self.send_packet_queue.pop(0)
+                        if self.connected[packet_and_dest[1]]:
+                            self._transmit_packet(packet_and_dest[0], packet_and_dest[1])
+                else:
+                    time.sleep(.05)
 
             # Check and see if any robots have (seemingly) lost connection and try to reconnect
             for i in range(len(self.bot_mgnrs)):
