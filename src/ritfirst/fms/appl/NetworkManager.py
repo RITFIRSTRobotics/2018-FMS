@@ -61,7 +61,7 @@ class NetworkManager(threading.Thread):
                         self.bot_mgnrs[i].stop()
 
             # If it's been awhile since we've sent a request packet, send another round to all of the connected robots
-            if time.time() - self.time_since_last_request > TIMEOUT_TIME /2:
+            if time.time() - self.time_since_last_request > TIMEOUT_TIME / 2:
                 for i in range(len(self.bot_mgnrs)):
                     if self.connected[i]:
                         packet = Packet(PacketType.REQUEST, RequestData.STATUS)
@@ -71,7 +71,6 @@ class NetworkManager(threading.Thread):
             # Poll all the bot managers for packets
             for i in range(len(self.bot_mgnrs)):
                 if self.bot_mgnrs[i].has_packet():
-                    print ("Into the if")
                     self.time_of_last_response[i] = time.time()
                     pack = jsonpickle.decode(self.bot_mgnrs[i].get_packet())
                     if pack.type == PacketType.RESPONSE:

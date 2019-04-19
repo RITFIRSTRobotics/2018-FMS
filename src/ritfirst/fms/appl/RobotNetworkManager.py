@@ -43,7 +43,6 @@ class RobotNetworkManager(threading.Thread):
             elif self.out_queue:
                 with self.out_queue_lock:
                     pack = self.out_queue.pop(0)
-                    print("Robot %d: "%self.destination + str(pack.encode()))
                     self.csock.send(pack.encode())
             else:
                 time.sleep(.05)
