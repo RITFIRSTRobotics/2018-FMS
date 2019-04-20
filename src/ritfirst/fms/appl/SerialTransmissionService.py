@@ -6,6 +6,7 @@ A service that connects to the ASC and reads data
 from threading import Thread
 
 import sys
+import time
 
 from core.utils.AllianceColor import AllianceColor
 from core.utils.HeaderParser import HeaderParser
@@ -106,10 +107,13 @@ class SerialTransmissionService(Thread):
 
         while True:
             # Read and process data sent to the ASC
-            if self.rser.in_waiting > 0:
-                _process(ser_readline(self.rser), AllianceColor.RED)
-            if self.bser.in_waiting > 0:
-                _process(ser_readline(self.bser), AllianceColor.BLUE)
+            if self.rser.in_waiting > 0 or self.bser.in_waiting > 0:
+                if self.rser.in_waiting > 0:
+                    _process(ser_readline(self.rser), AllianceColor.RED)
+                if self.bser.in_waiting > 0:
+                    _process(ser_readline(self.bser), AllianceColor.BLUE)
+            else:
+                time.sleep(.05)
 
             # Check for cleanup
             if self.cleanup:
