@@ -103,7 +103,7 @@ class NetworkManager(threading.Thread):
             # Check and see if any robots have (seemingly) lost connection and try to reconnect
             for i in range(len(self.bot_mgnrs)):
                 if self.bot_mgnrs[i].finished_init() and self.connected[i] and self.time_since_last_request - self.time_of_last_response[i] > TIMEOUT_TIME:
-                    # print("Robot %d lost connection! (%f seconds since last response)"%(i, self.time_since_last_request - self.time_of_last_response[i]))
+                    print("Robot %d lost connection! (%f seconds since last response)"%(i, self.time_since_last_request - self.time_of_last_response[i]))
                     self.connected[i] = False
         # We've been told to stop, so stop all of our children and join on them
         for i in range(len(self.bot_mgnrs)):

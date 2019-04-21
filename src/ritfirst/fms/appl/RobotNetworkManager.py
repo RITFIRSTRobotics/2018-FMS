@@ -34,25 +34,30 @@ class RobotNetworkManager(threading.Thread):
             self._is_connected = False
         self._tried_init = True
 
-        # While we're connected and haven't been told to stop
+            # While we're connected and haven't been told to stop
         while self._is_connected and self._keep_running:
-            # There's a packet to receive
-            if select.select((self.csock,), (), (), 0)[0]:
-                pack = self.csock.recv(BUFFER_SIZE).decode()
-                packList = pack.split("}{")
-                if len(packList) > 1:
-                    for i in range(len(packList)):
-                        if i != 0:
-                            packList[i] = "{" + packList[i]
-                        if i != len(packList) - 1:
-                            packList[i] = packList[i] + "}"
-                self.in_queue.extend(packList)
-            elif self.out_queue:
-                with self.out_queue_lock:
-                    pack = self.out_queue.pop(0)
-                    self.csock.send(pack.encode())
-            else:
-                time.sleep(.05)
+            try:
+                # There's a packet to receive
+                if select.select((self.csock,), (), (), 0)[0]:
+                    pack = self.csock.recv(BUFFER_SIZE).decode()
+                    packList = pack.split("}{")
+                    if len(packList) > 1:
+                        for i in range(len(packList)):
+                            if i != 0:
+                                packList[i] = "{" + packList[i]
+                            if i != len(packList) - 1:
+                                packList[i] = packList[i] + "}"
+                    self.in_queue.extend(packList)
+                elif self.out_queue:
+                    with self.out_queue_lock:
+                        pack = self.out_queue.pop(0)
+                        self.csock.send(pack.encode())
+                else:
+                    time.sleep(.05)
+            except ConnectionResetError as e:
+                self.stop()
+                self._is_connected = False
+
         self.csock.close()
 
     def send_packet(self, packet):
