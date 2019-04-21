@@ -6,8 +6,6 @@ from core.utils.HeaderParser import HeaderParser
 
 lock = Lock()
 
-LED_SLEEP_TIME = .1
-
 class LEDControlService:
     def __init__(self, rser, bser):
         self.hp = HeaderParser("core/serial/usbser_constants.hpp")
@@ -61,13 +59,16 @@ class LEDControlService:
                     led_macro(j, 'f', 'c')
 
     def start_match(self):
+        self.clear_buffer()
+        
         # Need to stop the generator
         if self.settings.run_generator:
             self.settings.run_generator = False
 
-            self.rbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_AUTOWAVE_STOP']) % (0), 0))
-            self.bbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_AUTOWAVE_STOP']) % (0), 0))
-        self.clear_buffer()
+            if self.settings.color == AllianceColor.RED:
+                self.rbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_AUTOWAVE_STOP']) % (0), 0))
+            if self.settings.color == AllianceColor.BLUE:
+                self.bbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_AUTOWAVE_STOP']) % (0), 0))
 
         with lock:
             self.rbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_WAVE']) % ('c', 255, 0, 0), 0))
@@ -99,7 +100,6 @@ class LEDControlService:
             self.rbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_SOLID']) % ('f', 0, 0, 0), .25))
             self.bbuffer.append(BufferEntry(str(self.hp.contents['LED_STRIP_SOLID']) % ('f', 0, 0, 0), .25))
         self.settings.run_generator = True
-        self.settings.num_running = 0
 
     def clear_buffer(self):
         with lock:
@@ -117,11 +117,7 @@ class LEDControlService:
         self.settings.r = r
         self.settings.g = g
         self.settings.b = b
-
-        if color == AllianceColor.RED:
-            self.bser.start_generator()
-        elif color == AllianceColor.BLUE:
-            self.rser.start_generator()
+        pass
 
 
 class BufferEntry:
@@ -142,7 +138,6 @@ class LEDGenerationSettings:
         self.g = g
         self.b = b
         self.run_generator = run_generator
-        self.num_running = 0
 
 
 class SerialWriteThread(Thread):
@@ -162,7 +157,22 @@ class SerialWriteThread(Thread):
             if self.buffer is None:
                 break
 
-            # Process the buffer
+            # See if there is anything in the buffer
+            if len(self.buffer) == 0 and not self.settings.run_generator:
+                time.sleep(.1)
+                continue
+
+            # Check to see if idle patterns should be generated
+            if len(self.buffer) == 0 and self.settings.run_generator and self.color == self.settings.color:
+                # Tell tha ASC to generate colors
+                self.ser.write((self.hp.contents['LED_STRIP_AUTOWAVE_START'] % (self.settings.r, self.settings.g,
+                                                                                self.settings.b) + "\n").encode())
+
+                # Do nothing until you hear back the results
+                while self.settings.color == self.color and self.settings.run_generator:
+                    time.sleep(.1)
+
+                continue
             if len(self.buffer) > 0:
                 try:
                     # If there is data in the buffer, then write it out and sleep for the time
@@ -181,14 +191,3 @@ class SerialWriteThread(Thread):
                 except Exception as e:
                     print(e)
                     pass
-
-            else:
-                # Don't hog CPU cycles
-                time.sleep(LED_SLEEP_TIME)
-
-    def start_generator(self):
-        with lock:
-            self.buffer.append(BufferEntry((self.hp.contents['LED_STRIP_AUTOWAVE_START'] %
-                                            (self.settings.r, self.settings.g, self.settings.b) + "\n").encode(), 0))
-
-
