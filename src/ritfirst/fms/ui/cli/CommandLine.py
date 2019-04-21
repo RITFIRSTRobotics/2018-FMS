@@ -162,9 +162,10 @@ def main():
         if commands[0] == "help":
             print("help -- print this message")
             print("start -- start a match (if not already started)")
+            print("reconnect -- try to reconnect to all the robots")
             print("stop -- stop the current match")
-            print("estop <index> -- emergency stop the robot at index (0 through 5)", end="")
-            print("quit -- closes the program")
+            print("estop <index> -- emergency stop the robot at index (0 through 5)")
+            print("exit -- closes the program", end="")
             continue
 
         # Match start
@@ -174,6 +175,10 @@ def main():
             else:
                 print("Match already running!", end="", file=sys.stderr)
             continue
+
+        # Reconnect
+        if commands[0] == "reconnect":
+            rcs.reconnect_to_all()
 
         # Match end
         if commands[0] == "stop":
@@ -190,11 +195,9 @@ def main():
 
         # Debugging
         if commands[0] == "debug":
-            print("buff: " + str(0) + "(Deprecated)")
             print("match_time: " + str(game.match_thread.remaining if game.match_thread is not None else 0))
             print("rscore: " + str(scs.red_score))  # alternatively, game.get_scores()[0]
             print("bscore: " + str(scs.blue_score))  # alternatively, game.get_scores()[1]
-            print("statuses: " + str(rcs.statuses))
             continue
 
         if commands[0] == "exit":
