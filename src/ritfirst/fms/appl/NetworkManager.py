@@ -124,6 +124,10 @@ class NetworkManager(threading.Thread):
     def _transmit_packet(self, packet, destination):
         self.bot_mgnrs[destination].send_packet(jsonpickle.encode(packet))
 
+    def reset_connect_attempts(self):
+        for i in range(len(self.reconnect_attempts)):
+            self.reconnect_attempts[i] = 0
+
     def send_packet(self, packet, bot_num):
         self.send_packet_queue.append((packet, bot_num))
 

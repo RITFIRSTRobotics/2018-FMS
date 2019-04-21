@@ -48,6 +48,9 @@ class RobotControllerService:
         pack = Packet(PacketType.DATA, MovementData(_RobotData(controller_sticks, controller_buttons)))
         self.ntwk_mgnr.send_packet(pack, controller_num)
 
+    def reconnect_to_all(self):
+        self.ntwk_mgnr.reset_connect_attempts()
+
     def cleanup(self):
         self.ntwk_mgnr.stop()
         self.ntwk_mgnr.join()
