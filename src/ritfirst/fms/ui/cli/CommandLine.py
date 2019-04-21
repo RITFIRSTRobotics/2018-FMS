@@ -179,6 +179,7 @@ def main():
         # Reconnect
         if commands[0] == "reconnect":
             rcs.reconnect_to_all()
+            continue
 
         # Match end
         if commands[0] == "stop":
