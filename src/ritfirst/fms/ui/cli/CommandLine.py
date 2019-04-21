@@ -125,7 +125,7 @@ def main():
     global led, scs, rcs, sts
     led = LEDControlService(rser, bser)
     scs = ScoringService(led)
-    rcs = RobotControllerService()
+    rcs = RobotControllerService(reconnect_after_initial_failure=True)
     rcs.disable_robots()
 
     sts = SerialTransmissionService(rser, bser, rcs, scs, led)

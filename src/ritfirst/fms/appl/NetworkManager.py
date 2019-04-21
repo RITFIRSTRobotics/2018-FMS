@@ -10,6 +10,7 @@ from ritfirst.fms.appl.RobotNetworkManager import RobotNetworkManager
 from core.network.packetdata.RobotStateData import RobotStateData
 
 BURST_PACKET_LIMIT = 100
+MAX_RECONNECT_ATTEMPTS = 5
 
 
 class NetworkManager(threading.Thread):
@@ -42,6 +43,7 @@ class NetworkManager(threading.Thread):
         self.time_since_last_request = time.time()
         self.time_of_last_response = [time.time()] * len(self.dests)
         self._stored_init_finished = [False] * len(self.dests)
+        self.reconnect_attempts = [0] * len(self.dests)
 
     def run(self):
         while self._keep_running:
@@ -53,12 +55,20 @@ class NetworkManager(threading.Thread):
                 if not self._stored_init_finished[i] and self.bot_mgnrs[i].finished_init():
                     self._stored_init_finished[i] = True
                     self.time_of_last_response[i] = time.time()
+                    if not self.bot_mgnrs[i].failed_to_connect():
+                        self.reconnect_attempts[i] = 0
                 if self.bot_mgnrs[i].failed_to_connect() or self.connected[i] is False:
                     self.connected[i] = False
-                    if self.reconnect_after_initial_failure:
+                    self.bot_mgnrs[i].stop()
+
+            for i in range(len(self.bot_mgnrs)):
+                if not self.bot_mgnrs[i].is_alive():
+                    self.bot_mgnrs[i].join()
+                    if self.reconnect_after_initial_failure and self.reconnect_attempts[i] < MAX_RECONNECT_ATTEMPTS:
                         self._attempt_to_reconnect_bot_mgr(i)
-                    else:
-                        self.bot_mgnrs[i].stop()
+                        self.connected[i] = True
+                        self.reconnect_attempts[i] = self.reconnect_attempts[i] + 1
+                        self._stored_init_finished[i] = False
 
             # If it's been awhile since we've sent a request packet, send another round to all of the connected robots
             if time.time() - self.time_since_last_request > TIMEOUT_TIME / 2:
@@ -93,7 +103,7 @@ class NetworkManager(threading.Thread):
             # Check and see if any robots have (seemingly) lost connection and try to reconnect
             for i in range(len(self.bot_mgnrs)):
                 if self.bot_mgnrs[i].finished_init() and self.connected[i] and self.time_since_last_request - self.time_of_last_response[i] > TIMEOUT_TIME:
-                    print("Robot %d lost connection! (%f seconds since last response)"%(i, self.time_since_last_request - self.time_of_last_response[i]))
+                    # print("Robot %d lost connection! (%f seconds since last response)"%(i, self.time_since_last_request - self.time_of_last_response[i]))
                     self.connected[i] = False
         # We've been told to stop, so stop all of our children and join on them
         for i in range(len(self.bot_mgnrs)):
@@ -109,7 +119,7 @@ class NetworkManager(threading.Thread):
             sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, True)
         self.bot_mgnrs[mgr_nbr] = RobotNetworkManager(self.dests[mgr_nbr], sock)
         self.bot_mgnrs[mgr_nbr].start()
-        print("Attempted to reconnect to bot %d" % mgr_nbr)
+        # print("Attempted to reconnect to bot %d" % mgr_nbr)
 
     def _transmit_packet(self, packet, destination):
         self.bot_mgnrs[destination].send_packet(jsonpickle.encode(packet))
