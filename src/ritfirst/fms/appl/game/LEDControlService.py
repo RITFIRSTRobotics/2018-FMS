@@ -189,6 +189,6 @@ class SerialWriteThread(Thread):
     def start_generator(self):
         with lock:
             self.buffer.append(BufferEntry((self.hp.contents['LED_STRIP_AUTOWAVE_START'] %
-                                            (self.settings.r, self.settings.g, self.settings.b) + "\n").encode(), 0))
+                                            (self.settings.r, self.settings.g, self.settings.b)).encode(), 0))
 
 
