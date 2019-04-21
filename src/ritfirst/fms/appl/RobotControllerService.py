@@ -26,6 +26,7 @@ class RobotControllerService:
         if not self.disabled:
             for i in range(len(self.dests)):
                 pack = Packet(PacketType.STATUS, RobotStateData.DISABLE)
+                print("Sent disable packet")
                 self.ntwk_mgnr.send_packet(pack, i)
         self.disabled = True
 
